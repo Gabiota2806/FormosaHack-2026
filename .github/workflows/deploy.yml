@@ -1,0 +1,38 @@
+name: Continuous Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, ubuntu-server]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Environment Variables
+        run: |
+          # Si existe el archivo .env persistente en el servidor, lo traemos al workspace del runner
+          if [ -f "$HOME/apps/FormosaHack-2026/.env" ]; then
+            cp "$HOME/apps/FormosaHack-2026/.env" .env
+          else
+            echo "Aviso: No se encontró .env en ~/apps/FormosaHack-2026/.env"
+          fi
+
+      - name: Deploy with Docker Compose
+        run: |
+          echo "Iniciando despliegue de contenedores..."
+          docker compose down
+          docker compose up -d --build
+
+      - name: Clean Up Unused Docker Images
+        run: |
+          docker image prune -f
+
+      - name: Verify Running Containers
+        run: |
+          sleep 5
+          docker compose ps
