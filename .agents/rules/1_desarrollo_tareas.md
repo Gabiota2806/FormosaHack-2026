@@ -19,10 +19,10 @@ Esta regla rige de forma permanente en todas las sesiones de desarrollo de Gabri
      ```
    - Inspecciona los modelos SQLAlchemy, routers FastAPI y schemas Pydantic v2 antes de proponer cambios.
    - Pausa y espera el "OK" explícito de Gabriel antes de codificar.
+   - **Transición Inicial en Jira vía MCP**: Tras el "OK" de Gabriel sobre el plan técnico, Antigravity DEBE transicionar la tarjeta de la subtarea a `En curso` utilizando la herramienta `jira_transition_issue`.
 
 2. **REGLA ESTRICTA DE JIRA EN COMMITS Y PULL REQUESTS**:
-   - NUNCA incluyas la clave de la Historia de Usuario (`HU-xx` / `FH26-xx` de la historia) en commits ni en títulos de PR para no cerrar historias antes de tiempo.
-   - SOLO referencia la clave de la Subtarea específica (`TASK-xx` / `FH26-xx` de la subtarea, ej. `FH26-39`).
+   - Referencia EXCLUSIVAMENTE la clave de la Subtarea técnica (`[FH26-xx]`, ej. `feat(auth): [FH26-39] agregar pruebas unitarias`) en el mensaje de commit y título del PR para garantizar máxima granularidad y trazabilidad atómica.
 
 3. **INSPECCIÓN VISUAL, PRE-VERIFICACIÓN CON PLAYWRIGHT Y QA MANUAL LOCAL**:
    - Codifica bajo TDD implementando pruebas en `pytest` para FastAPI o pruebas de componentes en React.
@@ -36,8 +36,12 @@ Esta regla rige de forma permanente en todas las sesiones de desarrollo de Gabri
 
 4. **DOCUMENTACIÓN, COMMIT Y FUSIÓN**:
    - Tras el OK de Gabriel en QA:
-     * Realiza el commit en español con Conventional Commits (`feat: ...`, `fix: ...`, `test: ...`).
+     * Realiza el commit en español con Conventional Commits (`feat(área): [FH26-xx] descripción...`).
      * Sube la rama: `git push origin feature/FH26-xxx-TASK-yyy-nombre-tarea`.
      * Abre el PR hacia `develop` usando `gh pr create`.
      * Verifica ausencia de conflictos y fusiona automáticamente (`gh pr merge <id> --merge`).
      * Limpieza: vuelve a `develop`, haz `git pull origin develop`, elimina la rama local (`git branch -d`) y remota (`git push origin --delete`).
+     * **Trazabilidad y Cierre en Jira vía MCP**:
+       1. Publica un comentario en la tarjeta (`jira_add_comment`) con el enlace al PR de GitHub y el commit de fusión.
+       2. Mueve la subtarea a `Listo` con `jira_transition_issue`.
+       3. Consulta las subtareas de la Historia de Usuario padre (`jira_search_issues`). Si todas están en `Listo`, transiciona automáticamente la Historia de Usuario padre a `Listo`.

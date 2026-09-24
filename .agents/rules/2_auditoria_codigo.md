@@ -35,3 +35,7 @@ Esta regla rige cada vez que Gabriel solicite auditar una tarea o Pull Request d
    - Tras el OK definitivo de Gabriel:
      * Fusiona la Pull Request hacia `develop` (`gh pr merge <id> --merge`).
      * Vuelve a `develop`, actualiza (`git pull origin develop`), y elimina la rama local y remota (`git push origin --delete <branch>`).
+     * **Trazabilidad y Cierre en Jira vía MCP**:
+       1. Publica un comentario formal en la tarjeta del compañero (`jira_add_comment`) con el dictamen de auditoría aprobado, enlace a la PR y commit de fusión.
+       2. Mueve la subtarea a `Listo` con `jira_transition_issue`.
+       3. Verifica si todas las subtareas de la Historia de Usuario padre están en `Listo` (`jira_search_issues`); de ser así, transiciona la Historia padre a `Listo`.
