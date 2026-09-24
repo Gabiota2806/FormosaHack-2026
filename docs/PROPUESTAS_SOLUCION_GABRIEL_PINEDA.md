@@ -1,109 +1,124 @@
-# Propuestas de Solución — Gabriel Pineda
+# Propuesta Integral de Solución — Gabriel Pineda
 **FormosaHack 2026**  
 **Eje Temático:** Seguridad  
 **Desafío Asignado:** Dificultad para reconocer engaños y riesgos en entornos digitales (Fraude, Phishing, Suplantación de Identidad, Falsas Noticias y Estafas).
 
 ---
 
-## Comparativa Rápida para el Equipo
+## 🛡️ Nombre del Proyecto: "CiberAlerta Formosa" (Escudo Comunitario & Prevención Digital)
 
-| Criterio | Opción 1: CiberAlerta Formosa (Radar & Detector) | Opción 2: FormosaVerifica (Directorio Oficial & Reputación) | Opción 3: EscudoDigital (Triaje de Emergencia & Denuncias) |
-| :--- | :--- | :--- | :--- |
-| **Enfoque Principal** | Detección temprana comunitaria + Escáner heurístico | Prevención proactiva basada en canales oficiales certificados | Respuesta rápida a incidentes + Asistente de contención |
-| **Público Objetivo** | Ciudadanos de a pie, adultos mayores, familias | Clientes de bancos, usuarios de servicios públicos, comercios | Personas que sospechan o ya fueron víctimas de un engaño |
-| **Impacto Visual en Demo** | ⭐⭐⭐⭐⭐ (Escáner en vivo con mensajes de WhatsApp reales) | ⭐⭐⭐⭐ (Buscador rápido con sellos de verificación oficial) | ⭐⭐⭐⭐ (Flujo de emergencia guiado + reporte formal) |
-| **Complejidad de Desarrollo (24h)** | Media-Alta (Perfectamente modular y paralelizable) | Media (Rápido de terminar, riesgo de quedar corto) | Media (Muy útil pero requiere bastante lógica de flujos) |
-| **Encaje con Nuestro Stack** | **100%** (Core Service: reportes/score; Auth: 2FA moderador) | **100%** (Core Service: canales; Auth: 2FA instituciones) | **100%** (Core Service: incidentes; Auth: 2FA auditores) |
+### 💡 Concepto Central: El Ciclo Integral de Seguridad Ciudadana
+La seguridad digital no se agota en advertir a la persona antes de hacer clic, ni en dejarla desamparada una vez que fue víctima. Esta propuesta unifica **Prevención Temprana** y **Asistencia Inmediata Post-Incidente** en una sola plataforma, donde **el incidente que un vecino sufrió hoy se convierte automáticamente en el escudo protector de toda la comunidad formoseña mañana.**
 
----
+```mermaid
+graph TD
+    User["Ciudadano Formoseño"]
+    
+    subgraph "FASE 1: PREVENCIÓN (Antes de hacer clic)"
+        Scan["Analizador Heurístico '¿Es una estafa?'<br/>Pega texto de WhatsApp, SMS o enlace"]
+        Radar["Radar Comunitario en Vivo<br/>Alertas activas por localidad de Formosa"]
+        Edu["Simulador Anti-Engaños<br/>Aprende jugando con casos reales"]
+    end
+    
+    subgraph "FASE 2: ASISTENCIA SOS (Después de caer o sospechar)"
+        Triaje["Asistente de Primeros Auxilios Digitales<br/>Guía de contención en 60 segundos"]
+        Acta["Generador de Acta / Ficha de Denuncia<br/>Ficha estructurada con CBU, alias y capturas"]
+        FeedBack["Anonimización & Retroalimentación"]
+    end
 
-## Opción 1: "CiberAlerta Formosa" (Plataforma Comunitaria de Detección Temprana y Radar de Fraudes) — *RECOMENDADA*
+    subgraph "FASE 3: GESTIÓN & AUDITORÍA (Panel con 2FA)"
+        Admin["Moderador / Policía Informática / Instituciones<br/>(Acceso protegido con 2FA TOTP Obligatorio)"]
+    end
 
-### 💡 La Idea en 1 Frase
-Una plataforma ciudadana donde cualquier persona puede pegar un mensaje, link o SMS sospechoso para saber al instante si es una estafa, y consultar un radar en tiempo real de engaños activos reportados en las localidades de Formosa.
-
-### 🧩 Módulos Principales
-1. **Analizador Heurístico "¿Es una Estafa?" (Instant Scanner):**
-   - El usuario pega un texto de WhatsApp, SMS, correo o enlace web.
-   - El motor evalúa indicadores de fraude:
-     - Sentido de urgencia extrema (*"Su cuenta será bloqueada en 2 horas"*).
-     - Solicitud de claves, tokens o transferencias inmediatas.
-     - Suplantación de entidades conocidas (Banco Formosa, REFSA, ANSES, Correo Argentino).
-     - Enlaces acortados o dominios engañosos (`bancoformosa-soporte.xyz` vs `bancoformosa.com.ar`).
-   - Devuelve un **Semáforo de Riesgo** (Verde / Amarillo / Rojo), porcentaje de riesgo, los motivos explicados en lenguaje sencillo y recomendaciones claras (*"Nunca compartas tu clave token", "Llama al número oficial"*).
-
-2. **Radar de Alertas Comunitarias en Tiempo Real (Feed Provincial):**
-   - Listado paginado de alertas reportadas por vecinos de Formosa.
-   - Filtros por:
-     - **Localidad:** Formosa Capital, Clorinda, Pirané, El Colorado, Las Lomitas, etc.
-     - **Tipo:** Bancario, Servicios Públicos (REFSA/Agua), Hackeo de WhatsApp, Compras falsas en Marketplace.
-     - **Estado:** En verificación, Confirmada por moderador, Descartada.
-   - Botón *"A mí también me llegó"* que incrementa el nivel de alerta comunitario.
-
-3. **Módulo Educativo Interactivo ("Simulador Anti-Engaños"):**
-   - Desafío interactivo de 4 preguntas con capturas simuladas de mensajes reales.
-   - El usuario desliza o elige *"¿Legítimo o Fraude?"* y recibe feedback educativo al instante.
-
-### 🏆 Por qué impresiona al jurado:
-- **Demostración en vivo contundente:** Durante la defensa, pegas un mensaje típico de estafa de WhatsApp ante los ojos del jurado y el sistema lo detecta en vivo con explicaciones claras.
-- **Arraigo local total:** Utiliza nombres reales (Banco Formosa, REFSA, comercios de Clorinda, etc.).
-- **Accesibilidad para adultos mayores:** Tipografías grandes, semáforos de color visuales y lenguaje sin tecnicismos complejos.
+    User -->|Tengo dudas sobre un mensaje| Scan
+    User -->|Quiero ver qué estafas circulan| Radar
+    User -->|¡Me estafaron / Pasé mis datos!| Triaje
+    
+    Triaje --> Acta
+    Triaje -->|Alimenta el radar de alertas| FeedBack
+    FeedBack --> Radar
+    Admin -.->|Valida y audita| Radar
+```
 
 ---
 
-## Opción 2: "FormosaVerifica" (Directorio de Canales Oficiales y Reputación Digital)
+## 🧩 Módulos del Sistema Unificado
 
-### 💡 La Idea en 1 Frase
-Un verificador colaborativo y registro unificado de confianza donde cualquier formoseño puede comprobar en 5 segundos si un número de WhatsApp, cuenta bancaria, alias o enlace web pertenece verdaderamente a una institución o comercio legítimo.
+### 1. MÓDULO PREVENTIVO: "¿Tenés dudas? Analizá antes de hacer clic"
+* **Analizador Heurístico "¿Es una Estafa?" (Instant Scanner):**
+  * El usuario pega un mensaje de WhatsApp, SMS, correo o enlace web sospechoso (ej. *"Banco Formosa: Ingrese a este link para validar su token o se bloqueará la cuenta"* o avisos falsos de corte de REFSA).
+  * El motor de análisis evalúa patrones críticos:
+    * Urgencia psicológica extrema (*"en menos de 2 horas"*).
+    * Solicitud de datos no compartibles (claves, tokens, transferencias).
+    * Suplantación de identidad institucional (Banco Formosa, REFSA, ANSES, Ministerios).
+    * Dominios falsos o sospechosos (`bancoformosa-redlink.xyz` vs dominio oficial).
+  * **Salida Visual:** Semáforo de riesgo (🟢 Seguro / 🟡 Precaución / 🔴 Peligro), score de riesgo (0% a 100%), motivos en lenguaje sencillo y consejos de acción inmediata.
 
-### 🧩 Módulos Principales
-1. **Buscador de Reputación y Validación Oficial:**
-   - Buscador rápido: se ingresa un número de teléfono, alias CBU/CVU o enlace.
-   - Resultados:
-     - 🟢 **Canal Oficial Verificado:** Sello verde que certifica que el canal pertenece a REFSA, Banco Formosa, Ministerio o comercio registrado.
-     - 🔴 **Reportado como Fraude:** Muestra advertencias de la comunidad con fecha y motivo.
-     - 🟡 **Canal Desconocido:** Advierte precaución y sugiere no transferir dinero.
-2. **Directorio Seguro Provincial:**
-   - Catálogo ordenado de los canales oficiales de contacto y pago autorizados de toda la provincia.
-3. **Gestión Institucional con 2FA:**
-   - Organismos y comercios verificados acceden con autenticación de dos factores (2FA TOTP) para dar de alta y actualizar sus canales legítimos.
+* **Radar de Alertas Comunitarias en Tiempo Real (Feed Provincial):**
+  * Listado paginado de alertas activas geolocalizadas en Formosa (Capital, Clorinda, Pirané, El Colorado, Las Lomitas, etc.).
+  * Filtros por localidad, categoría de fraude (Bancario, WhatsApp clonado, Servicios públicos, Compras falsas) y estado de verificación.
+  * Botón *"A mí también me llegó"* que incrementa el nivel de alerta comunitario.
 
-### 🏆 Por qué impresiona al jurado:
-- Ataca la causa raíz de la suplantación de identidad.
-- Excelente estructura arquitectónica para mostrar el microservicio de autenticación segura (2FA).
-
----
-
-## Opción 3: "EscudoDigital Formosa" (Triaje de Emergencia y Asistente de Incidentes Digitales)
-
-### 💡 La Idea en 1 Frase
-Una herramienta de contención y primeros auxilios digitales que guía a las personas en los primeros minutos críticos tras sospechar o haber caído en un engaño, evitando que el daño económico o de datos sea mayor.
-
-### 🧩 Módulos Principales
-1. **Asistente de Primeros Auxilios Digitales ("SOS Ciberseguridad"):**
-   - Preguntas rápidas: *"¿Diste tus claves bancarias?", "¿Pasaste el código de 6 dígitos de WhatsApp?", "¿Hiciste una transferencia a un desconocido?"*
-   - Protocolo de acción inmediata en 3 pasos con números de contacto directos de emergencia (bloqueo de tarjetas, recuperación de cuenta).
-2. **Generador de Acta/Reporte Digital para Denuncia:**
-   - Formulario estructurado para cargar capturas, datos del estafador (CBU destino, alias, teléfono) y cronología.
-   - Genera una ficha resumen en PDF lista para presentar ante la Policía Informática o Fiscalía provincial.
-3. **Mapa de Calor y Estadísticas de Ciberdelito:**
-   - Dashboard analítico con gráficos que muestran las modalidades de estafa predominantes por departamento de la provincia.
-
-### 🏆 Por qué impresiona al jurado:
-- Enfoque muy empático y humano ante una situación de angustia de la víctima.
-- Gran solidez en el backend (procesamiento de datos, métricas y reportes estructurados).
+* **Simulador Anti-Engaños ("Aprende Jugando"):**
+  * Desafío interactivo de 4 preguntas con capturas realistas para capacitar a jóvenes y adultos mayores a reconocer patrones de phishing.
 
 ---
 
-## Distribución de Roles Sugerida para el Equipo de 4
+### 2. MÓDULO POST-INCIDENTE: Botón Rojo "SOS: Me estafaron / Pasé mis datos"
+* **Asistente de Primeros Auxilios Digitales (Triaje en 60 segundos):**
+  * Diseñado para momentos de pánico, brinda contención y protocolos de acción en 3 pasos según el vector de ataque:
+    * **Si pasó claves bancarias / token:** Botón de llamada directa a la línea de emergencia del Banco Formosa / Red Link para bloqueo preventivo inmediato de tarjetas y home banking.
+    * **Si pasó el código de 6 dígitos de WhatsApp:** Pasos exactos para cerrar sesiones activas y enviar alerta a familiares antes de que pidan dinero a sus contactos.
+    * **Si ya realizó una transferencia:** Instrucciones para recopilar el comprobante Coelsa, ID de transacción y solicitar la revocación bancaria.
 
-Para no pisarse entre integrantes y trabajar en paralelo de forma óptima:
+* **Generador de Acta / Ficha de Denuncia Digital:**
+  * Formulario estructurado para asentar:
+    * CBU / CVU / Alias de destino del estafador.
+    * Número de teléfono / WhatsApp del atacante.
+    * Capturas de pantalla y relato cronológico.
+  * Genera una ficha resumen en PDF/imprimible lista para ser radicada ante la Fiscalía o la Policía Informática provincial.
 
-1. **Integrante 1 — Líder Frontend & UI/UX:**
-   - Componentes React: Semáforo de riesgo, analizador de texto, tarjetas de alertas y modales accesibles (Sonner toasts + ConfirmModal).
-2. **Integrante 2 — Frontend & Vistas / Simulador:**
-   - Filtros por localidad, paginación en servidor, integración con el cliente Axios (`api.ts`) y módulo educativo o estadísticas.
-3. **Integrante 3 — Líder Backend & Core Service:**
-   - Modelos SQLAlchemy con Soft Delete (`deleted_at`), Repository Pattern (`Router -> Service -> Repository`), validación con Pydantic v2 y endpoints paginados (`page`, `limit`).
-4. **Integrante 4 — Backend Auth, Motor de Detección & Seeders:**
-   - Microservicio de Auth & 2FA TOTP, motor heurístico de scoring de riesgos en FastAPI y script `seed.py` con localidades e instituciones de Formosa.
+* **Efecto Multiplicador Solidario:**
+  * El incidente se publica automáticamente de forma anónima en el Radar Comunitario, protegiendo a otros vecinos antes de que caigan en la misma modalidad.
+
+---
+
+### 3. PANEL DE GESTIÓN & AUDITORÍA (Microservicio de Autenticación con 2FA)
+* Acceso restringido para moderadores comunitarios, personal institucional o policía informática.
+* **Seguridad Estricta:** Inicio de sesión protegido con contraseña cifrada y **segundo factor de autenticación obligatorio (2FA TOTP con Google Authenticator / Authy)**.
+* Funcionalidades:
+  * Validación de alertas comunitarias (cambio de estado: Pendiente $\rightarrow$ Verificada / Oficial).
+  * Soft Delete (`deleted_at`) de reportes inválidos o maliciosos.
+  * Métricas y mapa de modalidades de estafas más frecuentes por departamento de la provincia.
+
+---
+
+## 🛠️ Encaje Técnico con Nuestro Stack Tecnológico
+
+| Requerimiento Técnico de la Guía | Implementación en CiberAlerta Formosa |
+| :--- | :--- |
+| **Frontend React + Vite + Tailwind** | Interfaz responsiva con pestañas de fácil acceso (Prevención vs. Emergencia SOS), semáforo visual de colores y tipografías grandes y legibles. |
+| **Cero Alertas Nativas (`alert()`)** | Notificaciones instantáneas con **Sonner Toasts** y modales accesibles (**ConfirmModal**) para confirmar denuncias o borrado de reportes. |
+| **Repository Pattern en Backend** | Microservicio Core (`core_service`) separando `Router -> Service -> Repository -> Database` para las entidades de alertas, incidentes y análisis. |
+| **Paginación y Filtros en Servidor** | El Radar Comunitario pagina por servidor (`page=1&limit=10`) con filtros dinámicos por `localidad`, `categoria` y `estado`. |
+| **Soft Delete (`deleted_at`)** | Todas las tablas de base de datos implementan borrado lógico sin pérdida física de evidencia. |
+| **2FA TOTP Obligatorio en Auth** | Microservicio `auth_service` con `pyotp` y códigos QR para el acceso administrativo y moderadores. |
+| **Seeders de Formosa** | Datos de prueba verosímiles (`seed.py`) con casos contextualizados en Formosa Capital, Clorinda, REFSA, Banco Formosa y hospitales locales. |
+
+---
+
+## 👥 Reparto de Tareas Recomendado (Equipo de 4 Integrantes)
+
+1. **Integrante 1 — Líder Frontend & UI/UX (Prevención & Scanner):**
+   - Vistas del Analizador de Mensajes, Semáforo de Riesgo y el Radar de Alertas Comunitarias en tiempo real con Tailwind CSS.
+2. **Integrante 2 — Frontend (Asistencia SOS, Denuncia & Simulador):**
+   - Flujo del Botón de Emergencia SOS (triaje de 3 pasos), formulario de generación de ficha de denuncia y módulo del simulador interactivo.
+3. **Integrante 3 — Líder Backend Core (Repository Pattern & Entidades):**
+   - Modelos SQLAlchemy (`incident_reports`, `scans`), repositorios, servicios, endpoints REST con Pydantic v2, filtros y paginación en servidor.
+4. **Integrante 4 — Backend Auth, Heurística & Seeders:**
+   - Auth Service con 2FA TOTP, motor heurístico de puntuación de riesgo en FastAPI y seeder provincial con datos verosímiles de Formosa.
+
+---
+
+## 🎯 El Pitch Ganador ante el Jurado (3 Minutos)
+> *"Los engaños digitales no se detienen únicamente advirtiendo a la gente que no haga clic: las personas a veces dudan y a veces caen en la trampa. CiberAlerta Formosa es la primera solución que acompaña al ciudadano en todo el ciclo: te da un escáner en el bolsillo para que salgas de dudas en 5 segundos, pero si lamentablemente ya caíste, no te deja solo; te da asistencia y contención inmediata en 60 segundos y convierte tu reporte en el escudo que salvará a miles de vecinos de nuestra provincia."*
