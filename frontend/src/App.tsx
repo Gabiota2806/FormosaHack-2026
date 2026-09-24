@@ -14,8 +14,16 @@ import { ChatAssistant } from './components/chat/ChatAssistant';
 import { ThreatRadar } from './components/radar/ThreatRadar';
 import { SosModal } from './components/sos/SosModal';
 
+type Tab = 'chat' | 'radar' | 'auth';
+
+const NAV_ITEMS: { id: Tab; label: string; icon: typeof MessageSquare }[] = [
+  { id: 'chat', label: 'Asistente', icon: MessageSquare },
+  { id: 'radar', label: 'Radar Comunitario', icon: Radio },
+  { id: 'auth', label: '2FA & Auth', icon: Lock },
+];
+
 export function App() {
-  const [activeTab, setActiveTab] = useState<'chat' | 'radar' | 'auth'>('chat');
+  const [activeTab, setActiveTab] = useState<Tab>('chat');
   const [sosModalOpen, setSosModalOpen] = useState(false);
 
   // Estado de 2FA & Auth
@@ -73,65 +81,50 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500/30">
+    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans selection:bg-brand-500/30">
       <Toaster position="top-right" richColors />
 
       {/* Header de Navegación */}
-      <header className="border-b border-slate-800 bg-slate-900/70 backdrop-blur-md sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-bold text-white shadow-lg shadow-cyan-500/20">
-              CG
+      <header className="border-b border-slate-800 bg-slate-900/85 backdrop-blur-md sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 shrink-0 rounded-xl bg-gradient-to-br from-sky-500 to-brand-400 flex items-center justify-center text-white shadow-lg shadow-brand-500/20">
+              <ShieldCheck className="w-5 h-5" />
             </div>
-            <div>
-              <span className="font-bold text-lg text-white tracking-tight">CiberGuardián</span>
-              <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-800 font-mono hidden sm:inline-block">
-                FormosaHack 2026
-              </span>
-            </div>
+            <span className="font-extrabold text-base sm:text-lg tracking-tight uppercase truncate">
+              <span className="text-white">Ciber</span>
+              <span className="text-brand-400">Guardián</span>
+            </span>
           </div>
 
           {/* Selector de Vistas y Botón de Pánico */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setActiveTab('chat')}
-              className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 ${
-                activeTab === 'chat'
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-              }`}
-            >
-              <MessageSquare className="w-4 h-4" /> Asistente
-            </button>
-            <button
-              onClick={() => setActiveTab('radar')}
-              className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 ${
-                activeTab === 'radar'
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-              }`}
-            >
-              <Radio className="w-4 h-4" /> Radar Comunitario
-            </button>
-            <button
-              onClick={() => setActiveTab('auth')}
-              className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 ${
-                activeTab === 'auth'
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-              }`}
-            >
-              <ShieldCheck className="w-4 h-4" /> 2FA & Auth
-            </button>
+          <nav className="flex items-center gap-1 sm:gap-2" aria-label="Secciones">
+            {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                onClick={() => setActiveTab(id)}
+                aria-current={activeTab === id ? 'page' : undefined}
+                aria-label={label}
+                title={label}
+                className={`relative px-2.5 sm:px-3 py-2 text-sm font-semibold transition-colors flex items-center gap-1.5 after:absolute after:inset-x-2 after:-bottom-[13px] after:h-0.5 after:rounded-full after:transition-colors ${
+                  activeTab === id
+                    ? 'text-brand-400 after:bg-brand-400'
+                    : 'text-slate-300 hover:text-white after:bg-transparent'
+                }`}
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                <span className="hidden md:inline">{label}</span>
+              </button>
+            ))}
 
             <button
               onClick={() => setSosModalOpen(true)}
-              className="ml-1 sm:ml-3 px-3.5 py-1.5 bg-red-600 hover:bg-red-500 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-red-600/20 transition-all flex items-center gap-1.5 animate-pulse"
+              className="ml-1 sm:ml-2 px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-extrabold text-xs uppercase tracking-wider rounded-full shadow-lg shadow-red-600/25 transition-colors flex items-center gap-1.5 animate-pulse"
             >
               <ShieldAlert className="w-4 h-4" />
               SOS
             </button>
-          </div>
+          </nav>
         </div>
       </header>
 

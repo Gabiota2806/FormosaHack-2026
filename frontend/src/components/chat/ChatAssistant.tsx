@@ -176,12 +176,18 @@ export function ChatAssistant({ onReportIncident, onOpenSos }: ChatAssistantProp
                     type="button"
                     disabled={isTyping}
                     onClick={() => handleQuickReply(reply)}
-                    className="text-left text-sm px-3.5 py-2.5 rounded-xl bg-slate-950/70 border border-slate-700 text-slate-200 hover:text-white hover:border-blue-500/80 hover:bg-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2.5"
+                    className="group text-left text-sm font-medium px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 hover:border-brand-400 hover:bg-white hover:shadow-md hover:-translate-y-px disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 transition-all flex items-center gap-3"
                   >
-                    <reply.icon
-                      className={`w-4 h-4 shrink-0 ${reply.type === 'entry' && reply.mode === 'SOS' ? 'text-red-400' : 'text-cyan-400'}`}
+                    <span
+                      className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center ${
+                        reply.type === 'entry' && reply.mode === 'SOS'
+                          ? 'bg-gradient-to-br from-red-100 to-orange-100 text-red-600'
+                          : 'bg-gradient-to-br from-sky-100 to-brand-100 text-sky-700'
+                      }`}
                       aria-hidden="true"
-                    />
+                    >
+                      <reply.icon className="w-4 h-4" />
+                    </span>
                     {reply.label}
                   </button>
                 ))}
@@ -209,18 +215,21 @@ export function ChatAssistant({ onReportIncident, onOpenSos }: ChatAssistantProp
   };
 
   return (
-    <div className="max-w-3xl mx-auto bg-slate-900/80 border border-slate-800 rounded-3xl shadow-xl backdrop-blur-md flex flex-col h-[calc(100vh-10rem)] min-h-[480px] overflow-hidden">
+    <div className="max-w-3xl mx-auto bg-slate-800/60 border border-slate-700/70 rounded-3xl shadow-2xl shadow-black/30 flex flex-col h-[calc(100vh-10rem)] min-h-[480px] overflow-hidden animate-fade-up">
       {/* Cabecera del chat */}
-      <div className="px-4 sm:px-6 py-3 border-b border-slate-800 flex items-center justify-between gap-3">
+      <div className="px-4 sm:px-6 py-3 border-b border-slate-700/70 bg-slate-800/80 flex items-center justify-between gap-3">
         <div>
           <h2 className="font-bold text-white leading-tight">Asistente CiberGuardián</h2>
-          <p className="text-xs text-slate-400">Sin registro · No guardamos tus mensajes</p>
+          <p className="text-xs text-slate-400 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-brand-400" aria-hidden="true" />
+            Sin registro · No guardamos tus mensajes
+          </p>
         </div>
         {hasStarted && (
           <button
             type="button"
             onClick={handleReset}
-            className="text-xs text-slate-400 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-slate-800 flex items-center gap-1.5 transition-colors"
+            className="text-xs text-slate-300 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-slate-700 flex items-center gap-1.5 transition-colors"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             Nueva consulta
@@ -247,7 +256,7 @@ export function ChatAssistant({ onReportIncident, onOpenSos }: ChatAssistantProp
       </div>
 
       {/* Compositor */}
-      <div className="border-t border-slate-800 p-3 sm:p-4 space-y-2.5 bg-slate-950/40">
+      <div className="border-t border-slate-700/70 p-3 sm:p-4 space-y-2.5 bg-slate-900/60">
         {hasStarted && (
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
             {ENTRY_OPTIONS.map((o) => (
@@ -258,8 +267,8 @@ export function ChatAssistant({ onReportIncident, onOpenSos }: ChatAssistantProp
                 onClick={() => handleEntry(o.mode)}
                 className={`shrink-0 text-xs px-3 py-1.5 rounded-full border transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 ${
                   o.mode === 'SOS'
-                    ? 'bg-red-950/60 border-red-800 text-red-300 hover:bg-red-900/60'
-                    : 'bg-slate-900 border-slate-700 text-slate-300 hover:text-white hover:border-blue-500/80'
+                    ? 'bg-red-600/15 border-red-500/50 text-red-300 hover:bg-red-600/25'
+                    : 'bg-slate-800 border-slate-600 text-slate-200 hover:text-white hover:border-brand-400'
                 }`}
               >
                 <o.icon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
@@ -288,13 +297,13 @@ export function ChatAssistant({ onReportIncident, onOpenSos }: ChatAssistantProp
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Pegá acá el mensaje, SMS o enlace sospechoso…"
-            className="flex-1 resize-none p-3 bg-slate-950/90 border border-slate-800 rounded-2xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+            className="flex-1 resize-none p-3 bg-slate-950/70 border border-slate-700 rounded-2xl text-sm text-slate-50 placeholder-slate-500 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/20 transition"
           />
           <button
             type="submit"
             disabled={isTyping || inputText.trim().length < MIN_LENGTH}
             aria-label="Analizar mensaje"
-            className="h-12 w-12 shrink-0 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl flex items-center justify-center shadow-lg shadow-cyan-600/20 transition-all"
+            className="h-12 w-12 shrink-0 bg-brand-500 hover:bg-brand-400 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 text-slate-950 rounded-2xl flex items-center justify-center shadow-lg shadow-brand-500/25 transition"
           >
             <Send className="w-5 h-5" />
           </button>
