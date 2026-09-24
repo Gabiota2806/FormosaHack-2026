@@ -118,10 +118,14 @@ export function App() {
             ))}
 
             <button
+              type="button"
               onClick={() => setSosModalOpen(true)}
-              className="ml-1 sm:ml-2 px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-extrabold text-xs uppercase tracking-wider rounded-full shadow-lg shadow-red-600/25 transition-colors flex items-center gap-1.5 animate-pulse"
+              aria-haspopup="dialog"
+              aria-expanded={sosModalOpen}
+              aria-label="SOS: abrir protocolo de emergencia y llamadas a bancos"
+              className="ml-1 sm:ml-2 px-4 py-2 min-h-9 bg-red-600 hover:bg-red-500 text-white font-extrabold text-xs uppercase tracking-wider rounded-full shadow-lg shadow-red-600/25 transition-colors flex items-center gap-1.5 motion-safe:animate-pulse focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400"
             >
-              <ShieldAlert className="w-4 h-4" />
+              <ShieldAlert className="w-4 h-4" aria-hidden="true" />
               SOS
             </button>
           </nav>
