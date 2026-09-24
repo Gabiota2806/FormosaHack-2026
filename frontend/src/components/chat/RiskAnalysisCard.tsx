@@ -10,6 +10,7 @@ import {
 import type { ChatAnalysisResponse } from '../../types';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
+import { HighlightedMessage } from './HighlightedMessage';
 
 type RiskLevel = ChatAnalysisResponse['risk_level'];
 
@@ -67,11 +68,13 @@ function TrafficLight({ level }: { level: RiskLevel }) {
 
 interface RiskAnalysisCardProps {
   analysis: ChatAnalysisResponse;
+  /** Mensaje que analizó el usuario, para resaltar las trampas dentro del texto. */
+  sourceText: string;
   onShareWhatsApp: () => void;
   onReport?: () => void;
 }
 
-export function RiskAnalysisCard({ analysis, onShareWhatsApp, onReport }: RiskAnalysisCardProps) {
+export function RiskAnalysisCard({ analysis, sourceText, onShareWhatsApp, onReport }: RiskAnalysisCardProps) {
   const style = RISK_STYLES[analysis.risk_level];
   const RiskIcon =
     analysis.risk_level === 'HIGH' ? ShieldAlert : analysis.risk_level === 'MEDIUM' ? AlertTriangle : ShieldCheck;
@@ -130,23 +133,14 @@ export function RiskAnalysisCard({ analysis, onShareWhatsApp, onReport }: RiskAn
           </div>
         </div>
 
-        {/* Trampas detectadas (el resaltado dentro del texto original es TASK-011) */}
+        {/* Mensaje original con las trampas resaltadas */}
         {analysis.highlighted_phrases.length > 0 && (
           <div className="pt-3 border-t border-slate-100">
             <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <Info className="w-3.5 h-3.5 text-sky-600" />
-              Trampas detectadas en el mensaje
+              <Info className="w-3.5 h-3.5 text-sky-600" aria-hidden="true" />
+              Tu mensaje, con las trampas marcadas
             </h4>
-            <ul className="space-y-2">
-              {analysis.highlighted_phrases.map((h, i) => (
-                <li key={i} className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs">
-                  <span className="font-mono font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded break-all">
-                    "{h.phrase}"
-                  </span>
-                  <p className="text-slate-600 mt-1.5 leading-relaxed">{h.reason}</p>
-                </li>
-              ))}
-            </ul>
+            <HighlightedMessage text={sourceText} phrases={analysis.highlighted_phrases} />
           </div>
         )}
 
