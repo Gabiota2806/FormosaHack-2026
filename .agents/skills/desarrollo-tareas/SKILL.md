@@ -15,8 +15,9 @@ Guiar a Antigravity en la ejecución paso a paso de tareas técnicas asignadas a
    - Inspeccionar modelos SQLAlchemy en `backend/core_service/app/models/` y componentes en `frontend/src/`.
    - Redactar el Plan Técnico y **esperar el OK explícito de Gabriel**.
 
-2. **Creación de Rama y Codificación TDD**:
+2. **Creación de Rama, Transición en Jira y Codificación TDD**:
    - Crear rama con comando nativo: `git checkout -b feature/FH26-xxx-TASK-yyy-nombre`.
+   - Transicionar la subtarea a `En curso` en Jira con `jira_transition_issue`.
    - Implementar pruebas con `pytest` en backend o pruebas de componentes en React.
    - Respetar Cero `alert()`, Sonner Toasts y Lucide React (`lucide-react`).
    - Ejecutar pruebas en Docker: `docker compose exec core_service pytest`.
@@ -26,7 +27,10 @@ Guiar a Antigravity en la ejecución paso a paso de tareas técnicas asignadas a
    - Entregar la Guía de QA Manual Paso a Paso apuntando a `http://localhost:8000`.
    - **PAUSA OBLIGATORIA**: Esperar el OK de Gabriel tras su verificación manual.
 
-4. **Fusión y Limpieza**:
-   - Commit en español: `git commit -m "feat(core): descripción con clave de TASK"`.
+4. **Fusión, Limpieza y Trazabilidad en Jira**:
+   - Commit en español: `git commit -m "feat(área): [FH26-xx] descripción..."`.
    - Push y PR: `git push origin feature/... && gh pr create --base develop ...`.
    - Merge y limpieza: `gh pr merge --merge`, volver a `develop`, `git pull` y eliminar rama local y remota.
+   - Publicar comentario en Jira con el enlace a la PR y commit (`jira_add_comment`).
+   - Transicionar subtarea a `Listo` con `jira_transition_issue`.
+   - Verificar si todas las subtareas de la Historia padre están `Listo`; de ser así, transicionar la Historia padre a `Listo`.

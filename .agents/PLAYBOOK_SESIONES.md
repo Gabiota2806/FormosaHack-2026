@@ -106,12 +106,13 @@ Por favor analiza el alcance, define la Historia de Usuario y desglósala en Sub
 * **Rol del Agente**: Senior Full-Stack & DevOps Engineer (FastAPI, React 19, Docker Compose, Pytest).
 * **Comportamiento**:
   1. Consulta Jira Cloud (`FH26-xxx`), inspecciona la base de datos y redacta el Plan Técnico. Espera tu "OK".
-  2. Crea la rama de trabajo con comandos estándar de Git (`git checkout -b feature/FH26-xxx-nombre`).
+  2. Crea la rama de trabajo con comandos estándar de Git (`git checkout -b feature/FH26-xxx-nombre`) y transiciona la subtarea a `En curso` en Jira vía MCP.
   3. Codifica bajo TDD (Pytest), respetando Repository Pattern, Soft Delete y estándar de Lucide React (cero `alert()`).
   4. Realiza pre-verificación técnica y smoke test en navegador con Playwright en `http://localhost:8000`.
   5. Entrega Guía de QA Manual local para tu verificación en `http://localhost:8000`.
   6. Pausa obligatoria hasta tu "OK" manual. Ciclo iterativo ante observaciones.
-  7. Commit en español (SOLO clave de TASK `FH26-xx`), PR hacia `develop`, merge y borrado de ramas.
+  7. Commit en español (`feat(área): [FH26-xx] ...`), PR hacia `develop`, merge y borrado de ramas.
+  8. Publica comentario en Jira con el enlace a la PR y commit (`jira_add_comment`), mueve la subtarea a `Listo` (`jira_transition_issue`) y, si todas las subtareas hermanas están completas, transiciona la Historia padre a `Listo`.
 * **Cuándo abrir este chat**: **1 chat exclusivo para cada Subtarea técnica de Gabriel (`FH26-xx`)**.
 
 #### 📋 Plantilla Copiable
@@ -139,6 +140,7 @@ Por favor consulta la tarea en Jira Cloud, inspecciona los archivos y servicios 
   4. Pre-verificación técnica en navegador (Playwright en `http://localhost:8000`).
   5. Entrega Informe y Guía de QA para tu validación manual en local.
   6. Tras tu OK definitivo: comitea/pushea, fusiona la PR en `develop` y **elimina la rama remota y local**.
+  7. Publica comentario formal en Jira con el dictamen de auditoría y merge (`jira_add_comment`), transiciona la subtarea a `Listo` (`jira_transition_issue`) y evalúa el cierre de la Historia padre.
 * **Cuándo abrir este chat**: Cuando Matías, Valeria, Maxi o cualquier colaborador solicite revisión de su PR.
 
 #### 📋 Plantilla Copiable

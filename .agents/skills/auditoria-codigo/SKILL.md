@@ -27,7 +27,10 @@ Proveer el procedimiento para que Gabriel audite entregas de otros desarrollador
    - Emitir Informe Técnico y Guía de QA para Gabriel.
    - **PAUSA OBLIGATORIA**: Esperar OK de Gabriel tras su prueba manual en Docker.
 
-4. **Fusión y Limpieza**:
+4. **Fusión, Limpieza y Cierre en Jira**:
    - `gh pr merge --merge`
    - `git checkout develop && git pull origin develop`
    - `git branch -d <rama> && git push origin --delete <rama>`
+   - Publicar comentario en Jira con el dictamen de auditoría y merge (`jira_add_comment`).
+   - Transicionar subtarea a `Listo` con `jira_transition_issue`.
+   - Si todas las subtareas de la Historia padre están `Listo`, transicionar la Historia a `Listo`.
