@@ -117,7 +117,7 @@ def test_update_applies_partial_fields(db_session, repo):
 def test_update_returns_none_when_missing(db_session, repo):
     from app.schemas.resource import ResourceUpdate
 
-    assert repo.update(db_session, 9999, ResourceUpdate(title="x")) is None
+    assert repo.update(db_session, 9999, ResourceUpdate(title="No Existe")) is None
 
 
 def test_soft_delete_returns_false_when_missing(db_session, repo):
