@@ -34,13 +34,11 @@ services:
         value: "*"
 
   # Frontend React (Compilación y Hosting Estático CDN)
-  - type: web
+  - type: static
     name: formosahack-frontend
-    runtime: static
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
-    plan: free
     envVars:
       - key: VITE_AUTH_API_URL
         fromService:
