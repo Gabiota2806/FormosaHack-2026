@@ -1,13 +1,11 @@
 import { PhoneOff } from 'lucide-react';
+import { Card } from '../ui/Card';
 import { CONTENTION } from './scripts';
 
 /** Respuesta de "ruptura de pánico" para quien está siendo presionado en vivo. */
 export function ContentionCard() {
   return (
-    <div
-      className="rounded-2xl rounded-bl-md overflow-hidden bg-white text-slate-800 shadow-xl shadow-red-950/30"
-      role="alert"
-    >
+    <Card className="rounded-bl-md shadow-red-950/30" role="alert">
       <div className="bg-red-600 px-4 sm:px-5 py-4 flex items-start gap-3 text-white">
         <div className="w-11 h-11 shrink-0 rounded-full bg-white/15 flex items-center justify-center animate-pulse">
           <PhoneOff className="w-6 h-6" />
@@ -31,6 +29,6 @@ export function ContentionCard() {
           ))}
         </ul>
       </div>
-    </div>
+    </Card>
   );
 }

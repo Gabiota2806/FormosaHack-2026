@@ -8,6 +8,8 @@ import {
   Info,
 } from 'lucide-react';
 import type { ChatAnalysisResponse } from '../../types';
+import { Button } from '../ui/Button';
+import { Card } from '../ui/Card';
 
 type RiskLevel = ChatAnalysisResponse['risk_level'];
 
@@ -75,7 +77,7 @@ export function RiskAnalysisCard({ analysis, onShareWhatsApp, onReport }: RiskAn
     analysis.risk_level === 'HIGH' ? ShieldAlert : analysis.risk_level === 'MEDIUM' ? AlertTriangle : ShieldCheck;
 
   return (
-    <div className="rounded-2xl rounded-bl-md overflow-hidden bg-white text-slate-800 shadow-xl shadow-black/20">
+    <Card className="rounded-bl-md">
       <div className={`h-1.5 ${style.accent}`} />
 
       <div className="p-4 sm:p-5 space-y-4">
@@ -149,26 +151,16 @@ export function RiskAnalysisCard({ analysis, onShareWhatsApp, onReport }: RiskAn
         )}
 
         <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row gap-2">
-          <button
-            type="button"
-            onClick={onShareWhatsApp}
-            className="px-4 py-2.5 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-2 shadow-md shadow-brand-600/25 transition-colors"
-          >
-            <Share2 className="w-4 h-4" />
+          <Button icon={Share2} onClick={onShareWhatsApp}>
             Consultar con un familiar por WhatsApp
-          </button>
+          </Button>
           {onReport && analysis.risk_level !== 'LOW' && (
-            <button
-              type="button"
-              onClick={onReport}
-              className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl text-xs flex items-center justify-center gap-2 border border-slate-200 transition-colors"
-            >
-              <ShieldAlert className="w-4 h-4 text-red-500" />
+            <Button variant="secondary" icon={ShieldAlert} onClick={onReport}>
               Advertir a la comunidad en el Radar
-            </button>
+            </Button>
           )}
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

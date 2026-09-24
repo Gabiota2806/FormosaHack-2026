@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { ShieldCheck } from 'lucide-react';
+import { IconBadge } from '../ui/IconBadge';
 
 interface ChatBubbleProps {
   role: 'user' | 'bot';
@@ -21,12 +22,7 @@ export function ChatBubble({ role, wide = false, children }: ChatBubbleProps) {
 
   return (
     <div className="flex items-end gap-2.5 animate-bubble-in">
-      <div
-        className="w-8 h-8 shrink-0 rounded-xl bg-gradient-to-br from-sky-500 to-brand-400 flex items-center justify-center text-white shadow-md shadow-brand-500/20"
-        aria-hidden="true"
-      >
-        <ShieldCheck className="w-4 h-4" />
-      </div>
+      <IconBadge icon={ShieldCheck} tone="solid" className="rounded-xl" />
       {wide ? (
         <div className="w-full min-w-0">{children}</div>
       ) : (
