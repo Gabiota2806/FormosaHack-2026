@@ -13,6 +13,12 @@ import { api } from './services/api';
 import { ChatAssistant } from './components/chat/ChatAssistant';
 import { ThreatRadar } from './components/radar/ThreatRadar';
 import { SosModal } from './components/sos/SosModal';
+import { Button } from './components/ui/Button';
+import { Card } from './components/ui/Card';
+import { IconBadge } from './components/ui/IconBadge';
+
+const AUTH_INPUT_CLASSES =
+  'w-full px-3 py-2 bg-slate-950/70 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/20 transition';
 
 type Tab = 'chat' | 'radar' | 'auth';
 
@@ -148,14 +154,16 @@ export function App() {
 
         {activeTab === 'auth' && (
           <div className="max-w-2xl mx-auto space-y-8">
-            <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm">
-              <h2 className="text-xl font-bold text-white mb-1 flex items-center gap-2">
-                <Lock className="w-5 h-5 text-indigo-400" />
-                Segundo Factor de Autenticación (2FA TOTP)
-              </h2>
-              <p className="text-xs text-slate-400 mb-6">
-                Módulo de seguridad perimetral obligatorio para administradores y moderadores del sistema.
-              </p>
+            <Card tone="dark" className="rounded-3xl p-6 sm:p-8 animate-fade-up">
+              <div className="flex items-center gap-3 mb-6">
+                <IconBadge icon={Lock} tone="solid" size="md" />
+                <div>
+                  <h2 className="text-xl font-bold text-white">Segundo Factor de Autenticación (2FA TOTP)</h2>
+                  <p className="text-xs text-slate-400">
+                    Módulo de seguridad perimetral obligatorio para administradores y moderadores del sistema.
+                  </p>
+                </div>
+              </div>
 
               {!isLoggedIn ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -166,34 +174,34 @@ export function App() {
                     </h3>
                     <input
                       type="text"
+                      aria-label="Nombre completo"
                       placeholder="Nombre completo"
                       value={userName}
                       onChange={(e) => setUserName(e.target.value)}
                       required
-                      className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
+                      className={AUTH_INPUT_CLASSES}
                     />
                     <input
                       type="email"
+                      aria-label="Correo electrónico"
                       placeholder="correo@ejemplo.com"
                       value={userEmail}
                       onChange={(e) => setUserEmail(e.target.value)}
                       required
-                      className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
+                      className={AUTH_INPUT_CLASSES}
                     />
                     <input
                       type="password"
+                      aria-label="Contraseña"
                       placeholder="Contraseña"
                       value={userPassword}
                       onChange={(e) => setUserPassword(e.target.value)}
                       required
-                      className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
+                      className={AUTH_INPUT_CLASSES}
                     />
-                    <button
-                      type="submit"
-                      className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold"
-                    >
+                    <Button type="submit" variant="ghost" className="w-full border border-slate-600">
                       Registrar
-                    </button>
+                    </Button>
                   </form>
 
                   {/* Login */}
@@ -203,74 +211,66 @@ export function App() {
                     </h3>
                     <input
                       type="email"
+                      aria-label="Correo electrónico"
                       placeholder="correo@ejemplo.com"
                       value={userEmail}
                       onChange={(e) => setUserEmail(e.target.value)}
                       required
-                      className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
+                      className={AUTH_INPUT_CLASSES}
                     />
                     <input
                       type="password"
+                      aria-label="Contraseña"
                       placeholder="Contraseña"
                       value={userPassword}
                       onChange={(e) => setUserPassword(e.target.value)}
                       required
-                      className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
+                      className={AUTH_INPUT_CLASSES}
                     />
-                    <button
-                      type="submit"
-                      className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow-md"
-                    >
+                    <Button type="submit" className="w-full">
                       Iniciar Sesión
-                    </button>
+                    </Button>
                   </form>
                 </div>
               ) : (
                 <div className="space-y-6">
-                  <div className="p-4 rounded-2xl bg-emerald-950/40 border border-emerald-800 text-emerald-300 text-xs flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
+                  <div className="p-4 rounded-2xl bg-brand-500/10 border border-brand-500/40 text-brand-300 text-xs flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-brand-400 shrink-0" aria-hidden="true" />
                     Sesión iniciada correctamente con token JWT asimétrico.
                   </div>
 
                   {!qrCodeData ? (
-                    <button
-                      onClick={handleSetup2FA}
-                      className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold flex items-center gap-2 shadow-md"
-                    >
-                      <QrCode className="w-4 h-4" /> Enrolar Segundo Factor (2FA TOTP)
-                    </button>
+                    <Button icon={QrCode} onClick={handleSetup2FA}>
+                      Enrolar Segundo Factor (2FA TOTP)
+                    </Button>
                   ) : (
-                    <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 text-center space-y-4">
-                      <p className="text-xs text-slate-300">
+                    <Card className="p-5 text-center space-y-4">
+                      <p className="text-sm text-slate-600">
                         Escaneá el código QR con Google Authenticator o Authy:
                       </p>
-                      <img src={qrCodeData} alt="Código QR 2FA" className="mx-auto rounded-xl border border-slate-800 p-2 bg-white" />
-                      <code className="text-[11px] font-mono text-cyan-400 bg-slate-900 px-3 py-1.5 rounded-lg inline-block">
+                      <img src={qrCodeData} alt="Código QR 2FA" className="mx-auto rounded-xl border border-slate-200 p-2 bg-white" />
+                      <code className="text-[11px] font-mono text-slate-700 bg-slate-100 px-3 py-1.5 rounded-lg inline-block">
                         {totpSecret}
                       </code>
 
                       <form onSubmit={handleVerify2FA} className="max-w-xs mx-auto flex gap-2 pt-2">
                         <input
                           type="text"
+                          aria-label="Código de 6 dígitos"
                           maxLength={6}
                           placeholder="000000"
                           value={verifyCode}
                           onChange={(e) => setVerifyCode(e.target.value)}
-                          className="flex-1 px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-center font-mono text-base text-white"
+                          className="flex-1 min-w-0 px-3 py-2 bg-white border border-slate-300 rounded-xl text-center font-mono text-base text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
                           required
                         />
-                        <button
-                          type="submit"
-                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-xs"
-                        >
-                          Verificar
-                        </button>
+                        <Button type="submit">Verificar</Button>
                       </form>
-                    </div>
+                    </Card>
                   )}
                 </div>
               )}
-            </div>
+            </Card>
           </div>
         )}
       </main>
