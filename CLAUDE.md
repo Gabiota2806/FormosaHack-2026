@@ -27,3 +27,7 @@
 2. **Backend:** FastAPI con Repository Pattern (`Router -> Service -> Repository -> Database`).
 3. **Seguridad:** 2FA TOTP con `pyotp`, rate limiting, headers de seguridad, validación Pydantic estricta.
 4. **Skills del Proyecto:** Consultar las directivas en `.agents/skills/`.
+5. **Metodología y Playbook:**
+   - Playbook de Sesiones: `.agents/PLAYBOOK_SESIONES.md`
+   - Reglas de GitFlow y Equipo: `docs/metodologia.md`
+   - Propuesta Maestra: `docs/PROPUESTA_DEFINITIVA.md`
