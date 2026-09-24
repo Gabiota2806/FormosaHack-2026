@@ -11,8 +11,20 @@ export const api = axios.create({
   timeout: 10000,
 });
 
-// Interceptor para inyectar token JWT
+// Interceptor para inyectar token JWT y resolución multi-servicio en Render / Gateway
 api.interceptors.request.use((config) => {
+  const authUrl = import.meta.env.VITE_AUTH_API_URL;
+  const coreUrl = import.meta.env.VITE_CORE_API_URL;
+
+  // Si se configuran microservicios independientes (ej: Render Cloud)
+  if (authUrl && config.url?.startsWith('/api/auth')) {
+    config.baseURL = authUrl.startsWith('http') ? authUrl : `https://${authUrl}`;
+    config.url = config.url.replace(/^\/api\/auth/, '');
+  } else if (coreUrl && config.url?.startsWith('/api/core')) {
+    config.baseURL = coreUrl.startsWith('http') ? coreUrl : `https://${coreUrl}`;
+    config.url = config.url.replace(/^\/api\/core/, '');
+  }
+
   const token = localStorage.getItem('access_token');
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
