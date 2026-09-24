@@ -2,13 +2,14 @@ import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
-from app.routers import resources
+from app.models import incident as incident_models
+from app.routers import resources, chat, incident
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
-    title="Core Business Service API — FormosaHack 2026",
-    description="Microservicio para la lógica central del desafío con Repository Pattern, Soft Delete y Paginación.",
+    title="CiberGuardián Core Service API — FormosaHack 2026",
+    description="Microservicio de Prevención, Contención y Radar de Ciberestafas con Repository Pattern, Soft Delete y Paginación.",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
@@ -32,6 +33,8 @@ async def add_security_headers(request: Request, call_next):
     return response
 
 app.include_router(resources.router)
+app.include_router(chat.router, prefix="/api/core")
+app.include_router(incident.router, prefix="/api/core")
 
 @app.get("/health", tags=["Health"])
 def health_check():
