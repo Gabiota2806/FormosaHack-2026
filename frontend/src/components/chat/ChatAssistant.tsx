@@ -197,6 +197,7 @@ export function ChatAssistant({ onReportIncident, onOpenSos }: ChatAssistantProp
           <ChatBubble role="bot" wide>
             <RiskAnalysisCard
               analysis={msg.analysis}
+              sourceText={msg.sourceText}
               onShareWhatsApp={() => handleShareWhatsApp(msg.analysis)}
               onReport={onReportIncident ? () => handleReport(msg.analysis, msg.sourceText) : undefined}
             />
