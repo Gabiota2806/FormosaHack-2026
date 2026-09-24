@@ -2,13 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import {
   PhoneCall,
   FileText,
-  Copy,
-  Download,
   X,
   AlertOctagon
 } from 'lucide-react';
-import { toast } from 'sonner';
 import { EmergencyCallsPanel } from './EmergencyCallsPanel';
+import { ReportCardForm } from './ReportCardForm';
+import { EMPTY_REPORT_CARD, type ReportCardData } from './reportCard';
 
 interface SosModalProps {
   isOpen: boolean;
@@ -18,13 +17,8 @@ interface SosModalProps {
 export function SosModal({ isOpen, onClose }: SosModalProps) {
   const [activeTab, setActiveTab] = useState<'emergency' | 'report_card'>('emergency');
 
-  // Estado para la Ficha de Denuncia Digital
-  const [entity, setEntity] = useState('Banco Formosa');
-  const [amount, setAmount] = useState('');
-  const [fakeCbu, setFakeCbu] = useState('');
-  const [fakePhone, setFakePhone] = useState('');
-  const [fakeLink, setFakeLink] = useState('');
-  const [narrative, setNarrative] = useState('');
+  // Datos de la Ficha de Denuncia: viven acá para no perderse si se cierra el modal sin querer.
+  const [reportData, setReportData] = useState<ReportCardData>(EMPTY_REPORT_CARD);
 
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   // onClose suele llegar como arrow inline; se guarda en un ref para no re-ejecutar el efecto en cada render.
@@ -54,47 +48,6 @@ export function SosModal({ isOpen, onClose }: SosModalProps) {
   }, [isOpen]);
 
   if (!isOpen) return null;
-
-  const generateReportCardText = () => {
-    const timestamp = new Date().toLocaleString('es-AR', { timeZone: 'America/Argentina/Cordoba' });
-    return `=====================================================
-FICHA DE DENUNCIA DIGITAL — CIBERGUARDIÁN
-Documento de recopilación preliminar para denuncia penal
-=====================================================
-Fecha y Hora de Emisión: ${timestamp}
-Entidad o Institución Fingida: ${entity || 'No especificada'}
-Monto Involucrado / Transferido: ${amount ? `$${amount}` : 'No declarado'}
-CBU / CVU / Alias del Estafador: ${fakeCbu || 'No aportado'}
-Teléfono del Estafador: ${fakePhone || 'No aportado'}
-Enlace o Sitio Fraudulento: ${fakeLink || 'No aportado'}
-
-RELATO DE LOS HECHOS:
-${narrative || 'El usuario no proporcionó una descripción adicional.'}
-
-RECOMENDACIONES LEGALES:
-1. Presentar esta ficha ante la Comisaría más cercana o Fiscalía de Instrucción de Formosa.
-2. Adjuntar capturas de pantalla completas donde se vean fechas y números de remitente.
-3. Solicitar en el banco el Número de Operación (ID Coelsa) de la transferencia.
-=====================================================`;
-  };
-
-  const handleCopyReportCard = () => {
-    const text = generateReportCardText();
-    navigator.clipboard.writeText(text);
-    toast.success('Ficha copiada al portapapeles. Ya podés pegarla en un documento o mensaje.');
-  };
-
-  const handleDownloadReportCard = () => {
-    const text = generateReportCardText();
-    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Ficha_Denuncia_CiberGuardian_${Date.now()}.txt`;
-    link.click();
-    URL.revokeObjectURL(url);
-    toast.success('Ficha descargada exitosamente en formato de texto.');
-  };
 
   return (
     <div
@@ -189,108 +142,8 @@ RECOMENDACIONES LEGALES:
             role="tabpanel"
             id="sos-panel-report-card"
             aria-labelledby="sos-tab-report-card"
-            className="space-y-4"
           >
-            <p className="text-xs text-slate-400">
-              Completá los datos conocidos para generar una ficha estructurada. Esta ficha sirve como evidencia formal ante la Policía Informática o tu banco.
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1">
-                  Entidad Suplantada
-                </label>
-                <input
-                  type="text"
-                  value={entity}
-                  onChange={(e) => setEntity(e.target.value)}
-                  placeholder="Ej: Banco Formosa, REFSA, MP"
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1">
-                  Monto Aproximado ($)
-                </label>
-                <input
-                  type="text"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="Ej: 45000"
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1">
-                  CBU/CVU o Alias Destino
-                </label>
-                <input
-                  type="text"
-                  value={fakeCbu}
-                  onChange={(e) => setFakeCbu(e.target.value)}
-                  placeholder="Ej: 00000031... o juan.perez.mp"
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1">
-                  Teléfono del Estafador
-                </label>
-                <input
-                  type="text"
-                  value={fakePhone}
-                  onChange={(e) => setFakePhone(e.target.value)}
-                  placeholder="Ej: +54 9 370 4..."
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">
-                Link o Sitio Fraudulento (si hubo)
-              </label>
-              <input
-                type="text"
-                value={fakeLink}
-                onChange={(e) => setFakeLink(e.target.value)}
-                placeholder="Ej: https://bancoformosa-gestion.online"
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">
-                Breve Relato de lo Ocurrido
-              </label>
-              <textarea
-                rows={3}
-                value={narrative}
-                onChange={(e) => setNarrative(e.target.value)}
-                placeholder="Contanos brevemente qué te dijeron o cómo fue la maniobra..."
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
-              />
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-2 pt-2">
-              <button
-                onClick={handleCopyReportCard}
-                className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 shadow-md transition-all"
-              >
-                <Copy className="w-3.5 h-3.5" />
-                Copiar Ficha de Denuncia
-              </button>
-              <button
-                onClick={handleDownloadReportCard}
-                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
-              >
-                <Download className="w-3.5 h-3.5" />
-                Descargar Archivo (.txt)
-              </button>
-            </div>
+            <ReportCardForm data={reportData} onChange={setReportData} />
           </div>
         )}
       </div>
