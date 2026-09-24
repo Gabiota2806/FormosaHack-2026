@@ -1,15 +1,14 @@
-import { useState } from 'react';
-import { 
-  PhoneCall, 
-  FileText, 
-  Copy, 
-  Download, 
-  X, 
-  AlertOctagon, 
-  Lock,
-  Building2
+import { useEffect, useRef, useState } from 'react';
+import {
+  PhoneCall,
+  FileText,
+  Copy,
+  Download,
+  X,
+  AlertOctagon
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { EmergencyCallsPanel } from './EmergencyCallsPanel';
 
 interface SosModalProps {
   isOpen: boolean;
@@ -27,45 +26,34 @@ export function SosModal({ isOpen, onClose }: SosModalProps) {
   const [fakeLink, setFakeLink] = useState('');
   const [narrative, setNarrative] = useState('');
 
-  if (!isOpen) return null;
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  // onClose suele llegar como arrow inline; se guarda en un ref para no re-ejecutar el efecto en cada render.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
-  const emergencyContacts = [
-    {
-      name: 'Banco Formosa (Bloqueo 24hs)',
-      phone: '0800-777-2262',
-      tel: 'tel:08007772262',
-      desc: 'Bloqueo inmediato de Home Banking y tarjetas de débito.',
-      highlight: true,
-    },
-    {
-      name: 'Tarjeta Chigüé',
-      phone: '0810-888-2444',
-      tel: 'tel:08108882444',
-      desc: 'Denuncia por pérdida, robo o transacciones no autorizadas.',
-      highlight: false,
-    },
-    {
-      name: 'Red Link (Central de Bloqueos)',
-      phone: '0800-888-5465',
-      tel: 'tel:08008885465',
-      desc: 'Atención 24 hs para inmovilización de tarjetas Link.',
-      highlight: false,
-    },
-    {
-      name: 'Banelco',
-      phone: '011-4320-5000',
-      tel: 'tel:01143205000',
-      desc: 'Línea de emergencia para clientes de la red Banelco.',
-      highlight: false,
-    },
-    {
-      name: 'Policía de Formosa (Delitos Informáticos)',
-      phone: '911 / 3704-430795',
-      tel: 'tel:911',
-      desc: 'Denuncias penales por estafas electrónicas y hackeos.',
-      highlight: true,
-    },
-  ];
+  // Accesibilidad: foco inicial, cierre con Escape, bloqueo de scroll y retorno del foco al disparador.
+  useEffect(() => {
+    if (!isOpen) return;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    closeButtonRef.current?.focus();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCloseRef.current();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previouslyFocused?.focus();
+    };
+  }, [isOpen]);
+
+  if (!isOpen) return null;
 
   const generateReportCardText = () => {
     const timestamp = new Date().toLocaleString('es-AR', { timeZone: 'America/Argentina/Cordoba' });
@@ -109,34 +97,57 @@ RECOMENDACIONES LEGALES:
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-slate-900 border border-red-900/60 p-6 sm:p-8 shadow-2xl text-slate-100">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="sos-modal-title"
+        aria-describedby="sos-modal-desc"
+        className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-clip rounded-3xl bg-slate-900 border border-red-900/60 p-6 sm:p-8 shadow-2xl text-slate-100"
+      >
         {/* Botón Cerrar */}
         <button
+          ref={closeButtonRef}
+          type="button"
           onClick={onClose}
-          className="absolute right-5 top-5 p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          aria-label="Cerrar protocolo SOS"
+          className="absolute right-5 top-5 p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors focus-visible:outline-2 focus-visible:outline-cyan-400"
         >
-          <X className="w-5 h-5" />
+          <X className="w-5 h-5" aria-hidden="true" />
         </button>
 
         {/* Encabezado */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-red-600/20 border border-red-500/40 flex items-center justify-center text-red-500 shadow-lg shadow-red-600/10">
-            <AlertOctagon className="w-6 h-6 animate-pulse" />
+        <div className="flex items-center gap-3 mb-6 pr-10">
+          <div className="w-12 h-12 shrink-0 rounded-2xl bg-red-600/20 border border-red-500/40 flex items-center justify-center text-red-500 shadow-lg shadow-red-600/10">
+            <AlertOctagon className="w-6 h-6 motion-safe:animate-pulse" aria-hidden="true" />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-white tracking-tight">
+            <h3 id="sos-modal-title" className="text-xl font-bold text-white tracking-tight">
               Protocolo de Auxilio y Contención SOS
             </h3>
-            <p className="text-xs text-slate-400">
+            <p id="sos-modal-desc" className="text-xs text-slate-400">
               Actuá con rapidez para congelar transacciones y resguardar tu evidencia.
             </p>
           </div>
         </div>
 
         {/* Selector de Pestañas */}
-        <div className="flex rounded-xl bg-slate-950 p-1 border border-slate-800 mb-6">
+        <div
+          role="tablist"
+          aria-label="Secciones del protocolo SOS"
+          className="flex rounded-xl bg-slate-950 p-1 border border-slate-800 mb-6"
+        >
           <button
+            type="button"
+            role="tab"
+            id="sos-tab-emergency"
+            aria-selected={activeTab === 'emergency'}
+            aria-controls="sos-panel-emergency"
             onClick={() => setActiveTab('emergency')}
             className={`flex-1 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${
               activeTab === 'emergency'
@@ -144,10 +155,15 @@ RECOMENDACIONES LEGALES:
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <PhoneCall className="w-4 h-4" />
+            <PhoneCall className="w-4 h-4" aria-hidden="true" />
             1. Llamadas 1-Tap a Bancos
           </button>
           <button
+            type="button"
+            role="tab"
+            id="sos-tab-report-card"
+            aria-selected={activeTab === 'report_card'}
+            aria-controls="sos-panel-report-card"
             onClick={() => setActiveTab('report_card')}
             className={`flex-1 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${
               activeTab === 'report_card'
@@ -155,65 +171,26 @@ RECOMENDACIONES LEGALES:
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <FileText className="w-4 h-4" />
+            <FileText className="w-4 h-4" aria-hidden="true" />
             2. Ficha de Denuncia Digital
           </button>
         </div>
 
         {/* Pestaña 1: Llamadas de Urgencia 1-Tap */}
         {activeTab === 'emergency' && (
-          <div className="space-y-4">
-            <div className="p-4 rounded-2xl bg-red-950/40 border border-red-800/60 text-xs text-red-200 space-y-1">
-              <span className="font-bold flex items-center gap-1.5 text-red-300">
-                <Lock className="w-4 h-4" /> Regla de Oro en Vivo:
-              </span>
-              <p>
-                Si estás al teléfono con alguien que te pide ir al cajero, dictar un token o abrir una app: 
-                <strong> ¡CORTÁ LA LLAMADA INMEDIATAMENTE!</strong> Ninguna entidad oficial hace eso.
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              {emergencyContacts.map((c, i) => (
-                <div
-                  key={i}
-                  className={`p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all ${
-                    c.highlight
-                      ? 'bg-red-950/20 border-red-800/80 hover:border-red-600'
-                      : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
-                  }`}
-                >
-                  <div>
-                    <h4 className="font-bold text-sm text-white flex items-center gap-2">
-                      <Building2 className="w-4 h-4 text-cyan-400" />
-                      {c.name}
-                    </h4>
-                    <p className="text-xs text-slate-400 mt-0.5">{c.desc}</p>
-                    <span className="text-xs font-mono font-bold text-slate-300 mt-1 block">
-                      {c.phone}
-                    </span>
-                  </div>
-
-                  <a
-                    href={c.tel}
-                    className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all shrink-0 ${
-                      c.highlight
-                        ? 'bg-red-600 hover:bg-red-500 text-white shadow-red-600/30'
-                        : 'bg-slate-800 hover:bg-slate-700 text-slate-100'
-                    }`}
-                  >
-                    <PhoneCall className="w-3.5 h-3.5" />
-                    Llamar 1-Tap
-                  </a>
-                </div>
-              ))}
-            </div>
+          <div role="tabpanel" id="sos-panel-emergency" aria-labelledby="sos-tab-emergency">
+            <EmergencyCallsPanel />
           </div>
         )}
 
         {/* Pestaña 2: Ficha de Denuncia Digital */}
         {activeTab === 'report_card' && (
-          <div className="space-y-4">
+          <div
+            role="tabpanel"
+            id="sos-panel-report-card"
+            aria-labelledby="sos-tab-report-card"
+            className="space-y-4"
+          >
             <p className="text-xs text-slate-400">
               Completá los datos conocidos para generar una ficha estructurada. Esta ficha sirve como evidencia formal ante la Policía Informática o tu banco.
             </p>
