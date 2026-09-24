@@ -32,3 +32,12 @@ Este proyecto es un prototipo desarrollado para la competencia **FormosaHack 202
 
 ## 4. Transparencia en Edición de Archivos (Regla Local)
 Antes de crear o modificar cualquier archivo en el espacio de trabajo, debes mostrar de forma explícita las líneas exactas o un diff detallado del cambio a realizar.
+
+---
+
+## 5. Metodología de Sesiones Aisladas y Ecosistema Local (.agents/)
+- **Playbook de Sesiones:** Consultar `.agents/PLAYBOOK_SESIONES.md` para el catálogo de Prompts y Slash Commands (`/desarrollo-tarea`, `/auditoria`, `/planificacion`, `/deploy`, `/analisis`, `/metodologias`).
+- **Paradigma de Trabajo de Gabriel:** "1 Chat = 1 Tarea / Propósito Específico" para preservar máxima agudeza técnica y evitar context poisoning.
+- **Reglas Normativas Locales:** Inyectadas permanentemente en `.agents/rules/` (`1_desarrollo_tareas.md` a `6_analisis_requerimientos.md`).
+- **Metodología de Equipo (GitFlow):** Consultar `docs/metodologia.md` para estándares de código, pruebas y flujo circular.
+- **Propuesta Maestra Definitiva:** Consultar `docs/PROPUESTA_DEFINITIVA.md` para la arquitectura oficial de CiberGuardián.
