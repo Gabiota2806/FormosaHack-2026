@@ -61,6 +61,6 @@ services:
 databases:
   - name: formosahack-db
     databaseName: formosahack
-    user: postgres
+    user: formosa_user
     plan: free
     region: ohio
