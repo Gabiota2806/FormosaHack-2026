@@ -100,16 +100,48 @@ describe('SosModal & EmergencyCallsPanel', () => {
 
     expect(screen.getByText(/Completá los datos conocidos para generar una ficha estructurada/i)).toBeInTheDocument();
 
-    const entityInput = screen.getByPlaceholderText('Ej: Banco Formosa, REFSA, MP');
-    await user.clear(entityInput);
-    await user.type(entityInput, 'Banco Formosa Fake');
+    await user.selectOptions(screen.getByLabelText(/¿Por dónde te contactaron\?/), 'WHATSAPP');
+    await user.type(screen.getByLabelText('Entidad suplantada'), 'Banco Formosa Fake');
+    await user.type(screen.getByLabelText('Monto aproximado ($)'), '45.000');
+    await user.click(screen.getByRole('button', { name: /Generar Ficha de Denuncia/i }));
+
+    const preview = screen.getByLabelText(/Vista previa de la ficha DEN-\d{4}-[A-Z0-9]{4}/);
+    expect(preview).toHaveTextContent('Canal de Contacto: WhatsApp');
+    expect(preview).toHaveTextContent('Entidad o Institución Fingida: Banco Formosa Fake');
 
     const copyFichaBtn = screen.getByRole('button', { name: /Copiar Ficha de Denuncia/i });
     await user.click(copyFichaBtn);
 
-    expect(writeTextMock).toHaveBeenCalled();
+    expect(writeTextMock).toHaveBeenCalledWith(expect.stringMatching(/Código de Referencia: DEN-\d{4}-/));
     expect(toast.success).toHaveBeenCalledWith(
       'Ficha copiada al portapapeles. Ya podés pegarla en un documento o mensaje.'
     );
+  });
+
+  it('no genera la ficha si falta el canal y marca el campo con error', async () => {
+    const user = userEvent.setup();
+    render(<SosModal isOpen={true} onClose={vi.fn()} />);
+
+    await user.click(screen.getByRole('tab', { name: /2\. Ficha de Denuncia Digital/i }));
+    await user.click(screen.getByRole('button', { name: /Generar Ficha de Denuncia/i }));
+
+    const channel = screen.getByLabelText(/¿Por dónde te contactaron\?/);
+    expect(channel).toHaveAttribute('aria-invalid', 'true');
+    expect(channel).toHaveFocus();
+    expect(screen.getByText('Elegí por dónde te contactaron.')).toBeInTheDocument();
+    expect(toast.error).toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: /Copiar Ficha de Denuncia/i })).not.toBeInTheDocument();
+  });
+
+  it('conserva los datos cargados al cambiar de pestaña', async () => {
+    const user = userEvent.setup();
+    render(<SosModal isOpen={true} onClose={vi.fn()} />);
+
+    await user.click(screen.getByRole('tab', { name: /2\. Ficha de Denuncia Digital/i }));
+    await user.type(screen.getByLabelText('Teléfono del estafador'), '+54 9 370 4998877');
+    await user.click(screen.getByRole('tab', { name: /1\. Llamadas 1-Tap/i }));
+    await user.click(screen.getByRole('tab', { name: /2\. Ficha de Denuncia Digital/i }));
+
+    expect(screen.getByLabelText('Teléfono del estafador')).toHaveValue('+54 9 370 4998877');
   });
 });
