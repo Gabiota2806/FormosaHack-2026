@@ -2,7 +2,7 @@ import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
-from app.models import incident as incident_models
+from app.models import incident as incident_models, resource as resource_models
 from app.routers import resources, chat, incident
 
 Base.metadata.create_all(bind=engine)
@@ -32,10 +32,15 @@ async def add_security_headers(request: Request, call_next):
     response.headers["X-XSS-Protection"] = "1; mode=block"
     return response
 
-app.include_router(resources.router)
-app.include_router(chat.router, prefix="/api/core")
-app.include_router(incident.router, prefix="/api/core")
-
 @app.get("/health", tags=["Health"])
 def health_check():
     return {"status": "healthy", "service": "core_service"}
+
+# Rutas directas para Nginx Gateway (proxy_pass reescribe /api/core/)
+app.include_router(chat.router)
+app.include_router(incident.router)
+
+# Rutas con prefijo para llamadas directas y suites de pruebas
+app.include_router(resources.router)
+app.include_router(chat.router, prefix="/api/core")
+app.include_router(incident.router, prefix="/api/core")

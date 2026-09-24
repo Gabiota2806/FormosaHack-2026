@@ -9,7 +9,10 @@ import {
   XCircle, 
   Sparkles, 
   RefreshCw, 
-  Info
+  Info,
+  PhoneCall,
+  Link2,
+  MessageCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { chatApi } from '../../services/api';
@@ -27,16 +30,19 @@ export function ChatAssistant({ onReportIncident, onOpenSos }: ChatAssistantProp
 
   const quickChips = [
     {
-      label: '🚨 Me llamaron de un banco pidiendo claves',
+      label: 'Me llamaron de un banco pidiendo claves',
       text: 'Me llamaron supuestamente de Banco Formosa diciendo que bloquearon mi cuenta y que tengo que ir al cajero o dictarles el código token de la app.',
+      icon: PhoneCall,
     },
     {
-      label: '🔗 Me llegó un link de un premio o paquete',
+      label: 'Me llegó un link de un premio o paquete',
       text: '¡URGENTE! Fuiste seleccionado para cobrar el bono extraordinario de $70.000. Confirmá tus datos antes de las 24 hs en: bit.ly/bono-acreditacion',
+      icon: Link2,
     },
     {
-      label: '💬 Me piden un código por WhatsApp',
+      label: 'Me piden un código por WhatsApp',
       text: 'Hola má, cambié de número porque se rompió mi teléfono. ¿Me pasás el código de 6 dígitos que te acaba de llegar por SMS?',
+      icon: MessageCircle,
     },
   ];
 
@@ -126,15 +132,19 @@ export function ChatAssistant({ onReportIncident, onOpenSos }: ChatAssistantProp
             Casos frecuentes de consulta inmediata:
           </span>
           <div className="flex flex-wrap gap-2">
-            {quickChips.map((chip, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleQuickChipClick(chip.text)}
-                className="text-xs px-3.5 py-2 rounded-xl bg-slate-950/70 border border-slate-800 text-slate-300 hover:text-white hover:border-blue-500/80 hover:bg-slate-800/60 transition-all text-left"
-              >
-                {chip.label}
-              </button>
-            ))}
+            {quickChips.map((chip, idx) => {
+              const Icon = chip.icon;
+              return (
+                <button
+                  key={idx}
+                  onClick={() => handleQuickChipClick(chip.text)}
+                  className="text-xs px-3.5 py-2 rounded-xl bg-slate-950/70 border border-slate-800 text-slate-300 hover:text-white hover:border-blue-500/80 hover:bg-slate-800/60 transition-all text-left flex items-center gap-2"
+                >
+                  <Icon className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                  <span>{chip.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
