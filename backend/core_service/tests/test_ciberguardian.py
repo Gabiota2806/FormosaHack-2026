@@ -19,6 +19,17 @@ def test_chat_high_risk_urgency_and_credentials():
     assert len(data["highlighted_phrases"]) >= 2
     assert "wa.me" not in data["wa_share_text"] or len(data["wa_share_text"]) > 10
 
+def test_chat_medium_risk():
+    payload = {
+        "message": "Aviso de Banco Formosa: Por mantenimiento del sistema, rogamos ingresar antes de las 20hs."
+    }
+    res = client.post("/api/core/chat/message", json=payload)
+    assert res.status_code == 200
+    data = res.json()
+    assert data["risk_level"] == "MEDIUM"
+    assert 30 <= data["risk_percentage"] < 60
+    assert data["detected_entity"] == "Banco Formosa"
+
 def test_chat_low_risk():
     payload = {
         "message": "Hola, ¿cómo estás? Te paso el apunte de la clase de algoritmos para que lo leas cuando puedas."
