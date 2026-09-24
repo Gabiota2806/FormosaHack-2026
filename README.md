@@ -54,11 +54,20 @@ El sistema implementa una arquitectura desacoplada de **Microservicios** contene
 
 ---
 
-## 3. Puesta en Marcha en 1 Comando
+## 3. Puesta en Marcha Rápida (Para los 4 Integrantes)
 
-Para levantar toda la infraestructura (Base de datos PostgreSQL, Microservicios, Gateway y Frontend):
+> **Guía detallada de instalación:** Consultar [docs/ONBOARDING_EQUIPO.md](docs/ONBOARDING_EQUIPO.md)
 
+### Pasos al clonar el repositorio:
 ```bash
+# 1. Clonar y entrar al proyecto
+git clone https://github.com/Gabiota2806/FormosaHack-2026.git
+cd FormosaHack-2026
+
+# 2. Configurar variables de entorno locales
+cp .env.example .env
+
+# 3. Levantar toda la infraestructura en Docker (Postgres, Microservicios, Gateway y Frontend)
 docker compose up -d
 ```
 
