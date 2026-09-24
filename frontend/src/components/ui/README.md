@@ -25,6 +25,14 @@ import { Share2, Trash2, Send } from 'lucide-react';
 
 Es `type="button"` por defecto: en formularios pasá `type="submit"`.
 
+Para darle estilo de botón a algo que no es `<button>` (por ejemplo un enlace `tel:`), usá `buttonClasses`:
+
+```tsx
+import { buttonClasses } from '../ui/buttonClasses';
+
+<a href="tel:08007772262" className={buttonClasses({ variant: 'danger' })}>Llamar</a>
+```
+
 ## `Card`
 
 ```tsx
