@@ -3,6 +3,9 @@ import { Send, RotateCcw, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { chatApi } from '../../services/api';
 import type { ChatAnalysisResponse } from '../../types';
+import { Button } from '../ui/Button';
+import { Card } from '../ui/Card';
+import { IconBadge } from '../ui/IconBadge';
 import { ChatBubble } from './ChatBubble';
 import { ContentionCard } from './ContentionCard';
 import { RiskAnalysisCard } from './RiskAnalysisCard';
@@ -176,11 +179,11 @@ export function ChatAssistant({ onReportIncident, onOpenSos }: ChatAssistantProp
                     type="button"
                     disabled={isTyping}
                     onClick={() => handleQuickReply(reply)}
-                    className="text-left text-sm px-3.5 py-2.5 rounded-xl bg-slate-950/70 border border-slate-700 text-slate-200 hover:text-white hover:border-blue-500/80 hover:bg-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2.5"
+                    className="group text-left text-sm font-medium px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 hover:border-brand-400 hover:bg-white hover:shadow-md hover:-translate-y-px disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 transition-all flex items-center gap-3"
                   >
-                    <reply.icon
-                      className={`w-4 h-4 shrink-0 ${reply.type === 'entry' && reply.mode === 'SOS' ? 'text-red-400' : 'text-cyan-400'}`}
-                      aria-hidden="true"
+                    <IconBadge
+                      icon={reply.icon}
+                      tone={reply.type === 'entry' && reply.mode === 'SOS' ? 'danger' : 'brand'}
                     />
                     {reply.label}
                   </button>
@@ -209,22 +212,20 @@ export function ChatAssistant({ onReportIncident, onOpenSos }: ChatAssistantProp
   };
 
   return (
-    <div className="max-w-3xl mx-auto bg-slate-900/80 border border-slate-800 rounded-3xl shadow-xl backdrop-blur-md flex flex-col h-[calc(100vh-10rem)] min-h-[480px] overflow-hidden">
+    <Card tone="dark" className="max-w-3xl mx-auto rounded-3xl flex flex-col h-[calc(100vh-10rem)] min-h-[480px] animate-fade-up">
       {/* Cabecera del chat */}
-      <div className="px-4 sm:px-6 py-3 border-b border-slate-800 flex items-center justify-between gap-3">
+      <div className="px-4 sm:px-6 py-3 border-b border-slate-700/70 bg-slate-800/80 flex items-center justify-between gap-3">
         <div>
           <h2 className="font-bold text-white leading-tight">Asistente CiberGuardián</h2>
-          <p className="text-xs text-slate-400">Sin registro · No guardamos tus mensajes</p>
+          <p className="text-xs text-slate-400 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-brand-400" aria-hidden="true" />
+            Sin registro · No guardamos tus mensajes
+          </p>
         </div>
         {hasStarted && (
-          <button
-            type="button"
-            onClick={handleReset}
-            className="text-xs text-slate-400 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-slate-800 flex items-center gap-1.5 transition-colors"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
+          <Button variant="ghost" size="sm" icon={RotateCcw} onClick={handleReset}>
             Nueva consulta
-          </button>
+          </Button>
         )}
       </div>
 
@@ -247,7 +248,7 @@ export function ChatAssistant({ onReportIncident, onOpenSos }: ChatAssistantProp
       </div>
 
       {/* Compositor */}
-      <div className="border-t border-slate-800 p-3 sm:p-4 space-y-2.5 bg-slate-950/40">
+      <div className="border-t border-slate-700/70 p-3 sm:p-4 space-y-2.5 bg-slate-900/60">
         {hasStarted && (
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
             {ENTRY_OPTIONS.map((o) => (
@@ -258,8 +259,8 @@ export function ChatAssistant({ onReportIncident, onOpenSos }: ChatAssistantProp
                 onClick={() => handleEntry(o.mode)}
                 className={`shrink-0 text-xs px-3 py-1.5 rounded-full border transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 ${
                   o.mode === 'SOS'
-                    ? 'bg-red-950/60 border-red-800 text-red-300 hover:bg-red-900/60'
-                    : 'bg-slate-900 border-slate-700 text-slate-300 hover:text-white hover:border-blue-500/80'
+                    ? 'bg-red-600/15 border-red-500/50 text-red-300 hover:bg-red-600/25'
+                    : 'bg-slate-800 border-slate-600 text-slate-200 hover:text-white hover:border-brand-400'
                 }`}
               >
                 <o.icon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
@@ -288,22 +289,21 @@ export function ChatAssistant({ onReportIncident, onOpenSos }: ChatAssistantProp
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Pegá acá el mensaje, SMS o enlace sospechoso…"
-            className="flex-1 resize-none p-3 bg-slate-950/90 border border-slate-800 rounded-2xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+            className="flex-1 resize-none p-3 bg-slate-950/70 border border-slate-700 rounded-2xl text-sm text-slate-50 placeholder-slate-500 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/20 transition"
           />
-          <button
+          <Button
             type="submit"
+            size="icon"
+            icon={Send}
             disabled={isTyping || inputText.trim().length < MIN_LENGTH}
             aria-label="Analizar mensaje"
-            className="h-12 w-12 shrink-0 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl flex items-center justify-center shadow-lg shadow-cyan-600/20 transition-all"
-          >
-            <Send className="w-5 h-5" />
-          </button>
+          />
         </form>
         <p className="text-[11px] text-slate-500 flex items-center gap-1">
           <ShieldAlert className="w-3 h-3" />
           Esto es una ayuda, no un veredicto. Ante la duda, no actúes.
         </p>
       </div>
-    </div>
+    </Card>
   );
 }
