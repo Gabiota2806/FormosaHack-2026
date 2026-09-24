@@ -18,3 +18,8 @@ Mantener sincronizado el progreso del equipo en Jira sin salir del entorno de de
    - Cuando se complete y se verifiquen los tests: mover a `Done`.
 4. **Actualizar docs/TASKS.md:**
    - Registrar la clave de Jira (ej. `FH-12`) en la columna correspondiente del documento markdown.
+
+## Sincronizador Automático (Script en Python)
+- Una vez cargadas las credenciales en `.env`:
+  - Probar conexión: `python3 scripts/sync_jira.py test`
+  - Subir las tareas de `docs/TASKS.md` a Jira: `python3 scripts/sync_jira.py push`
