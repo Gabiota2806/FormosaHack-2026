@@ -51,3 +51,17 @@ def test_soft_delete():
     # No debe ser encontrado luego del borrado lógico
     get_res = client.get(f"/{item_id}")
     assert get_res.status_code == 404
+
+def test_pagination_validation_lives_in_router():
+    """
+    La validación de paginación debe ocurrir en la capa Router (Query constraints),
+    no en el Service. Si el cliente envía limit fuera de rango, FastAPI debe
+    responder 422 antes de llegar al service.
+    """
+    # limit=999 excede el máximo permitido (le=100)
+    bad_limit = client.get("/?limit=999")
+    assert bad_limit.status_code == 422
+
+    # page=0 viola ge=1
+    bad_page = client.get("/?page=0")
+    assert bad_page.status_code == 422
