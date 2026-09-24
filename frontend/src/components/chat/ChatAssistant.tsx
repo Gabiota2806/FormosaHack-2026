@@ -21,6 +21,7 @@ import {
   WELCOME_TEXT,
 } from './scripts';
 import type { ChatMessage, EntryMode, NewChatMessage, QuickReply } from './types';
+import { buildFamilyShareText, buildWhatsAppUrl } from './whatsappShare';
 
 interface ChatAssistantProps {
   onReportIncident?: (title: string, entity: string, vector: string, text: string) => void;
@@ -128,9 +129,8 @@ export function ChatAssistant({ onReportIncident, onOpenSos }: ChatAssistantProp
     else handleAnalyze(reply.text);
   };
 
-  const handleShareWhatsApp = (analysis: ChatAnalysisResponse) => {
-    const url = `https://wa.me/?text=${encodeURIComponent(analysis.wa_share_text)}`;
-    window.open(url, '_blank', 'noopener');
+  const handleShareWhatsApp = (analysis: ChatAnalysisResponse, sourceText: string) => {
+    window.open(buildWhatsAppUrl(buildFamilyShareText(analysis, sourceText)), '_blank', 'noopener');
     toast.success('Abriendo WhatsApp para consultar con tu contacto de confianza.');
   };
 
@@ -198,7 +198,7 @@ export function ChatAssistant({ onReportIncident, onOpenSos }: ChatAssistantProp
             <RiskAnalysisCard
               analysis={msg.analysis}
               sourceText={msg.sourceText}
-              onShareWhatsApp={() => handleShareWhatsApp(msg.analysis)}
+              onShareWhatsApp={() => handleShareWhatsApp(msg.analysis, msg.sourceText)}
               onReport={onReportIncident ? () => handleReport(msg.analysis, msg.sourceText) : undefined}
             />
           </ChatBubble>

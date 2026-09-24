@@ -76,6 +76,24 @@ describe('ChatAssistant', () => {
     expect(screen.getByLabelText('Mensaje sospechoso')).toHaveValue('');
   });
 
+  it('consulta a un familiar por WhatsApp con el mensaje y el diagnóstico', async () => {
+    const user = userEvent.setup();
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
+    analyzeMessage.mockResolvedValue(HIGH_RISK);
+    render(<ChatAssistant />);
+
+    await user.type(screen.getByLabelText('Mensaje sospechoso'), `${SUSPICIOUS_TEXT}{Enter}`);
+    await user.click(await screen.findByRole('button', { name: 'Consultar con un familiar por WhatsApp' }));
+
+    expect(open).toHaveBeenCalledOnce();
+    const [url, target] = open.mock.calls[0];
+    expect(target).toBe('_blank');
+    const text = decodeURIComponent(String(url).replace('https://wa.me/?text=', ''));
+    expect(text).toContain(`"${SUSPICIOUS_TEXT}"`);
+    expect(text).toContain('*Riesgo alto* (85% de probabilidad de engaño)');
+    open.mockRestore();
+  });
+
   it('Shift+Enter agrega un salto de línea sin enviar', async () => {
     const user = userEvent.setup();
     render(<ChatAssistant />);
