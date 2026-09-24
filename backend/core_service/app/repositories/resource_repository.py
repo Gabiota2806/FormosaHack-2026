@@ -1,12 +1,18 @@
 import math
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Tuple, List
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from app.models.resource import ResourceItem
 from app.schemas.resource import ResourceCreate, ResourceUpdate
 
+
 class ResourceRepository:
+    """
+    Capa de acceso a datos para ResourceItem aplicando Repository Pattern.
+    Filtra obligatoriamente por deleted_at IS NULL para preservar el Soft Delete.
+    """
+
     def get_paginated(
         self,
         db: Session,
@@ -55,12 +61,12 @@ class ResourceRepository:
         item = self.get_by_id(db, resource_id)
         if not item:
             return None
-        
+
         update_dict = data.model_dump(exclude_unset=True)
         for key, value in update_dict.items():
             setattr(item, key, value)
-        
-        item.updated_at = datetime.utcnow()
+
+        item.updated_at = datetime.now(timezone.utc)
         db.commit()
         db.refresh(item)
         return item
@@ -69,7 +75,7 @@ class ResourceRepository:
         item = self.get_by_id(db, resource_id)
         if not item:
             return False
-        
-        item.deleted_at = datetime.utcnow()
+
+        item.deleted_at = datetime.now(timezone.utc)
         db.commit()
         return True
