@@ -34,8 +34,9 @@ services:
         value: "*"
 
   # Frontend React (Compilación y Hosting Estático CDN)
-  - type: static
+  - type: web
     name: formosahack-frontend
+    runtime: static
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
