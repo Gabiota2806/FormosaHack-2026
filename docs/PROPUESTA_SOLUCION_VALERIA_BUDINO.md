@@ -1,5 +1,6 @@
 # Propuesta de Solución — ESCUDO (nombre provisorio)
 
+> **Autor:** Valeria Budiño  
 > **Competencia:** FormosaHack 2026 — Ultra Hackatón de 24 Horas  
 > **Eje temático:** Seguridad y Sociedad  
 > **Estado:** Propuesta inicial (previa a la especificación formal en `docs/SDD.md`)
