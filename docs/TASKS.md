@@ -1,35 +1,37 @@
-# Registro de Tareas del Proyecto (TASKS) — Metodología SDD
-
-> **Sincronización:** Diseñado para mapearse directamente con el tablero de Jira del equipo mediante el Servidor MCP o tableros ágiles (TODO $\rightarrow$ IN PROGRESS $\rightarrow$ CODE REVIEW $\rightarrow$ DONE).
-
----
-
-## Matriz de Tareas
-
-| ID | Tarea | Componente | Prioridad | Jira Key | Criterios de Aceptación & DoD | Estado |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **TASK-001** | Definición del SDD y Especificación de Requerimientos | Documentación | **Crítica** | - | Completar `docs/SDD.md` con la problemática asignada en la hora 0-2. | `TODO` |
-| **TASK-002** | Scaffolding de Docker Compose y Redes de Microservicios | Infra / DevOps | **Alta** | - | `docker-compose.yml` levanta PostgreSQL, Gateway, Frontend y Microservicios. | `TODO` |
-| **TASK-003** | Servicio de Autenticación Base (JWT, Hashing, Roles) | Auth Service | **Alta** | - | Registro de usuarios, login con JWT y protección de contraseñas con Argon2id/bcrypt. | `TODO` |
-| **TASK-004** | Segundo Factor de Autenticación (2FA TOTP con Google Auth) | Auth Service | **Crítica** | - | Enrolamiento con QR/Secreto TOTP y middleware de verificación obligatoria. | `TODO` |
-| **TASK-005** | Rate Limiting y Cabeceras de Seguridad en Auth | Auth Service | **Alta** | - | Límites de peticiones (SlowAPI) en login/register y cabeceras de seguridad activas. | `TODO` |
-| **TASK-006** | Modelado de Entidades Core con Soft Delete (`deleted_at`) | Core Service | **Alta** | - | Modelos SQLAlchemy con clave foránea, timestamps y borrado lógico. | `TODO` |
-| **TASK-007** | Implementación del Repository Pattern en Core Service | Core Service | **Alta** | - | Separación estricta: `Router -> Service -> Repository -> Database`. | `TODO` |
-| **TASK-008** | Paginación en Servidor y Filtros de Búsqueda Dinámicos | Core Service | **Media** | - | Endpoints devuelven `data`, `total`, `page`, `limit` sin saturar memoria. | `TODO` |
-| **TASK-009** | Configuración de API Gateway (Nginx / Proxy Unificado) | Gateway | **Alta** | - | Enrutamiento unificado bajo el puerto 8000 para `/api/auth` y `/api/core`. | `TODO` |
-| **TASK-010** | Scaffolding Frontend React (Vite, TS, Tailwind CSS) | Frontend | **Alta** | - | Estructura base limpia, cliente Axios con interceptores y diseño responsivo. | `TODO` |
-| **TASK-011** | Sistema de Notificaciones Toasts y Modales (Cero `alert()`) | Frontend | **Alta** | - | Sonner Toasts para feedback de operaciones y modales accesibles para confirmación. | `TODO` |
-| **TASK-012** | Pantalla de Login, Registro y Enrolamiento/Validación 2FA | Frontend | **Alta** | - | Formularios con validación en tiempo real y flujo de verificación TOTP. | `TODO` |
-| **TASK-013** | Vistas de la Problemática Core (CRUD, Tablas Paginadas) | Frontend | **Alta** | - | Consumo de endpoints de Core Service con estados de carga y manejo de errores. | `TODO` |
-| **TASK-014** | Seeder de Datos Contextuales de Formosa para Demostración | Core / Seeders | **Media** | - | Población de base de datos con instituciones, nombres y datos locales reales. | `TODO` |
-| **TASK-015** | Pruebas Unitarias Obligatorias (`pytest`) y Swagger Docs | Backend / QA | **Crítica** | - | Tests unitarios pasando y Swagger accesible en `/docs` para evaluación. | `TODO` |
-| **TASK-016** | README de Entrega y Guion de Pitch para el Jurado | Producto | **Crítica** | - | Documento final con justificación técnica y ensayo del pitch de 3-5 minutos. | `TODO` |
+# Registro de Tareas del Proyecto (TASKS) — CiberGuardián
+**Metodología:** Spec-Driven Development (SDD)  
+**Configuración Oficial:** Duplas de Desarrollo  
+• **Dupla Frontend:** Matías + Valeria Budiño  
+• **Dupla Backend & Infraestructura:** Gabriel Pineda + Maxi González  
+**Rama:** `design` (Lista para sincronizar a `develop`)
 
 ---
 
-## Definition of Done (DoD) para cada Tarea
-1. Código revisado por al menos un compañero del equipo o IA asistente.
-2. Sin credenciales ni secretos en el código fuente.
-3. Tests unitarios implementados para la lógica creada.
-4. Mensajes de error legibles y amigables.
-5. Commit descriptivo en español siguiendo convenciones (`feat:`, `fix:`, `refactor:`).
+## Matriz de Tareas Oficial del Hackatón
+
+| ID | Tarea | Asignado a | Componente | Criterios de Aceptación & DoD | Estado |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **TASK-001** | Definición del SDD y Arquitectura de CiberGuardián | **Equipo Completo** | Documentación | `docs/SDD.md` formalizado con modelos, endpoints y flujo del chatbot. | `DONE` ✅ |
+| **TASK-002** | Infraestructura Docker Compose y CI/CD en Servidor | **Gabriel Pineda** | Infra / DevOps | Contenedores levantados, deploy en Render y self-hosted runner operando. | `DONE` ✅ |
+| **TASK-003** | Auth Service Base (JWT, Hashing bcrypt, RBAC) | **Gabriel Pineda** | Auth Service | Login, registro y emisión de JWT para moderadores y administradores. | `DONE` ✅ |
+| **TASK-004** | Segundo Factor 2FA TOTP (Google Authenticator) | **Gabriel Pineda** | Auth Service | Enrolamiento con QR en Base64 y verificación con `pyotp`. | `DONE` ✅ |
+| **TASK-005** | Rate Limiting (SlowAPI) y Security Headers | **Gabriel Pineda** | Gateway / Auth | SlowAPI en endpoints sensibles y cabeceras contra clickjacking en Nginx. | `DONE` ✅ |
+| **TASK-006** | Modelado de Incidentes y Reportes con Soft Delete | **Maxi González** | Core Service | Modelos SQLAlchemy `incident_reports`, `incident_votes`, `official_channels` con `deleted_at`. | `TODO` ⏳ |
+| **TASK-007** | Repository Pattern en Core Service (`Router->Service->Repo`) | **Maxi González** | Core Service | `IncidentRepository`, `IncidentService` e `IncidentRouter` desacoplados. | `TODO` ⏳ |
+| **TASK-008** | Endpoints de Radar Paginado en Servidor y Filtros | **Maxi González** | Core Service | `GET /api/core/incidents` paginado con filtros de entidad y vector + alertas de brote. | `TODO` ⏳ |
+| **TASK-009** | Seeder de Estafas Reales y Canales Verificados | **Maxi González** | Core / Seeders | Script `seed.py` con casos reales de phishing bancario, servicios y comercios. | `TODO` ⏳ |
+| **TASK-010** | Interfaz del Chatbot CiberGuardián (React + Tailwind) | **Matías** | Frontend | Chat interactivo con chips de acción rápida, burbujas y semáforo visual. | `TODO` ⏳ |
+| **TASK-011** | Resaltado Interactivo de Frases Engañosas | **Matías** | Frontend | Componente visual que resalta en el mensaje las trampas de urgencia y enlaces falsos. | `TODO` ⏳ |
+| **TASK-012** | Botón de Consulta a Familiar por WhatsApp (`wa.me`) | **Matías** | Frontend | Acción directa para reenviar el diagnóstico formateado a un contacto de confianza. | `TODO` ⏳ |
+| **TASK-013** | Botón de Pánico SOS y Llamada 1-Tap a Bancos | **Valeria Budiño** | Frontend | Accesos directos a líneas de bloqueo 24hs de Banco Formosa, Red Link y Banelco. | `TODO` ⏳ |
+| **TASK-014** | Generador de Ficha de Denuncia Digital Descargable | **Valeria Budiño** | Frontend | Formulario guiado que genera resumen con CBU y teléfono para la Policía Informática. | `TODO` ⏳ |
+| **TASK-015** | Vista del Radar de Amenazas con "A mí también me llegó" | **Valeria Budiño** | Frontend | Feed de alertas por entidad/vector consumiendo endpoint paginado con Toasts. | `TODO` ⏳ |
+| **TASK-016** | Modo Protector Mayor & PWA Web Share Target | **Valeria Budiño** | Frontend / PWA | Switch de accesibilidad XL y recepción de mensajes compartidos desde WhatsApp móvil. | `TODO` ⏳ |
+| **TASK-017** | Pruebas Unitarias (`pytest`) y Documentación Swagger | **Gabriel Pineda** | Backend / QA | Tests unitarios para el chatbot y swagger interactivo en `/docs`. | `TODO` ⏳ |
+| **TASK-018** | Guion de Pitch y Demostración en Vivo ante el Jurado | **Equipo Completo** | Producto | Presentación de 3 minutos con mensaje real de estafa en vivo ante el jurado. | `TODO` ⏳ |
+
+---
+
+## Siguiente Paso Inmediato:
+1. Realizar el commit de cierre de la fase de diseño en la rama **`design`** y pushear a GitHub.
+2. Hacer checkout a **`develop`** y comenzar la implementación de las tareas en paralelo.
