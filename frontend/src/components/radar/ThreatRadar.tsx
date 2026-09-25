@@ -17,6 +17,7 @@ import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { IconBadge } from '../ui/IconBadge';
 import { cn } from '../ui/cn';
+import { PushSubscriptionBanner } from '../push/PushSubscriptionBanner';
 import { IncidentCard, IncidentCardSkeleton } from './IncidentCard';
 import { ENTITY_OPTIONS, VECTOR_LABELS } from './radarLabels';
 import { useIncidents } from './useIncidents';
@@ -163,6 +164,9 @@ export function ThreatRadar({ highlightId = null }: ThreatRadarProps) {
           </Button>
         </div>
       )}
+
+      {/* Suscripción a las alertas push de brotes (FH26-76): debajo del brote activo, que es más urgente */}
+      <PushSubscriptionBanner />
 
       {/* Cabecera y Filtros */}
       <Card tone="dark" className="rounded-3xl p-6 animate-fade-up">
