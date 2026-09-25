@@ -130,3 +130,24 @@ export const incidentApi = {
     return res.data;
   },
 };
+
+/** Suscripción tal como la serializa PushSubscription.toJSON(), más datos del dispositivo. */
+export interface PushSubscriptionPayload {
+  endpoint: string;
+  keys: { p256dh: string; auth: string };
+  user_agent?: string;
+}
+
+export const pushApi = {
+  /** Clave pública VAPID; llega vacía si el servidor no tiene las claves configuradas. */
+  getVapidPublicKey: async (): Promise<string> => {
+    const res = await api.get<{ vapid_public_key: string }>('/api/core/push/vapid-public-key', { silent: true });
+    return res.data.vapid_public_key;
+  },
+  subscribe: async (payload: PushSubscriptionPayload) => {
+    await api.post('/api/core/push/subscribe', payload, { silent: true });
+  },
+  unsubscribe: async (endpoint: string) => {
+    await api.delete('/api/core/push/subscriptions', { data: { endpoint }, silent: true });
+  },
+};
