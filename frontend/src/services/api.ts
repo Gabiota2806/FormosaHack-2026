@@ -4,8 +4,16 @@ import type {
   ChatAnalysisResponse, 
   IncidentPaginationResponse, 
   IncidentItem,
+  IncidentStats,
   OfficialChannel 
 } from '../types';
+
+declare module 'axios' {
+  interface AxiosRequestConfig {
+    /** Sin toast de error: quien hace el pedido maneja la falla (p. ej. métricas de fondo). */
+    silent?: boolean;
+  }
+}
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -42,8 +50,8 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError<{ detail?: string }>) => {
-    // Pedidos cancelados a propósito (AbortController): no son errores para el usuario.
-    if (axios.isCancel(error)) {
+    // Pedidos cancelados a propósito (AbortController) o marcados como silent: no se avisa al usuario.
+    if (axios.isCancel(error) || error.config?.silent) {
       return Promise.reject(error);
     }
 
@@ -111,6 +119,10 @@ export const incidentApi = {
   },
   createIncident: async (data: Partial<IncidentItem>) => {
     const res = await api.post<IncidentItem>('/api/core/incidents', data);
+    return res.data;
+  },
+  getStats: async (signal?: AbortSignal): Promise<IncidentStats> => {
+    const res = await api.get<IncidentStats>('/api/core/incidents/stats', { signal, silent: true });
     return res.data;
   },
   getVerifiedChannels: async (): Promise<OfficialChannel[]> => {

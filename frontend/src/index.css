@@ -94,6 +94,33 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/*
+ * Barra de scroll sutil (FH26-60): fina, redondeada y sin fondo, en lugar de la barra gruesa
+ * del sistema. Firefox usa scrollbar-*; Chromium y Safari, los pseudo-elementos -webkit-.
+ */
+@utility scrollbar-subtle {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-slate-300) transparent;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--color-slate-300);
+    border-radius: 9999px;
+    /* Borde transparente: separa la barra del borde del contenedor. */
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-slate-400);
+  }
+}
+
 /* Accesibilidad: sin animaciones para quien las desactivó en su sistema. */
 @media (prefers-reduced-motion: reduce) {
   *,

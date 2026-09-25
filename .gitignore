@@ -27,10 +27,16 @@ wheels/
 .coverage
 htmlcov/
 
-# Node & Frontend
+# Node & Packages
+node_modules/
+*/node_modules/
 frontend/node_modules/
 frontend/dist/
 frontend/dist-ssr/
+extension/node_modules/
+extension/node_modules
+extension/dist/
+extension/dist
 *.local
 npm-debug.log*
 yarn-debug.log*

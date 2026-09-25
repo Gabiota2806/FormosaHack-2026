@@ -4,5 +4,6 @@ import { afterEach } from 'vitest';
 
 afterEach(cleanup);
 
-// jsdom no implementa el scroll de elementos.
+// jsdom no implementa el scroll de elementos ni de la ventana.
 Element.prototype.scrollTo = () => {};
+window.scrollTo = () => {};
