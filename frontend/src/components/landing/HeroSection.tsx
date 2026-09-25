@@ -4,7 +4,8 @@ import type { LandingProps } from './types';
 
 const TRUST_BADGES = [
   { icon: ShieldCheck, label: 'Gratis y sin registro' },
-  { icon: Lock, label: 'No guardamos tus mensajes' },
+  // Honesto con el historial anónimo (FH26-89): se guarda solo si la persona no lo desactiva.
+  { icon: Lock, label: 'Vos decidís si guardamos tus consultas' },
   { icon: MapPin, label: 'Pensado para Formosa' },
 ];
 
