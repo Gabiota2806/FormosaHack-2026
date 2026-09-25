@@ -1,5 +1,5 @@
 import { StrictMode } from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { chatApi } from '../../services/api';
@@ -115,43 +115,43 @@ describe('ChatAssistant', () => {
     expect(await screen.findByText(ANALYSIS_ERROR_TEXT)).toBeInTheDocument();
   });
 
-  describe('mensaje compartido desde otra app (Web Share Target)', () => {
-    it('lo muestra y lo analiza una sola vez, aun con StrictMode', async () => {
+  describe('pedidos del widget (request)', () => {
+    it('analiza el mensaje pedido una sola vez, aun con StrictMode', async () => {
       analyzeMessage.mockResolvedValue(HIGH_RISK);
+      const onRequestHandled = vi.fn();
       render(
         <StrictMode>
-          <ChatAssistant sharedMessage={`  ${SUSPICIOUS_TEXT}  `} />
+          <ChatAssistant request={{ id: 1, message: `  ${SUSPICIOUS_TEXT}  ` }} onRequestHandled={onRequestHandled} />
         </StrictMode>,
       );
 
       expect(screen.getByText(SUSPICIOUS_TEXT)).toBeInTheDocument();
       expect(await screen.findByText('ALERTA ROJA: intento de estafa.')).toBeInTheDocument();
-      expect(analyzeMessage).toHaveBeenCalledTimes(1);
-      expect(analyzeMessage).toHaveBeenCalledWith(SUSPICIOUS_TEXT);
+      expect(analyzeMessage).toHaveBeenCalledExactlyOnceWith(SUSPICIOUS_TEXT);
+      expect(onRequestHandled).toHaveBeenCalledExactlyOnceWith(1);
     });
 
-    it('avisa una sola vez que tomó el mensaje compartido, aun con StrictMode', async () => {
-      analyzeMessage.mockResolvedValue(HIGH_RISK);
-      const onSharedMessageHandled = vi.fn();
+    it('responde el momento pedido una sola vez, aun con StrictMode', async () => {
       render(
         <StrictMode>
-          <ChatAssistant sharedMessage={SUSPICIOUS_TEXT} onSharedMessageHandled={onSharedMessageHandled} />
+          <ChatAssistant request={{ id: 1, entry: 'DURANTE' }} />
         </StrictMode>,
       );
 
-      await screen.findByText('ALERTA ROJA: intento de estafa.');
-      expect(onSharedMessageHandled).toHaveBeenCalledTimes(1);
+      expect(await screen.findByText(CONTENTION.title)).toBeInTheDocument();
+      await waitFor(() => expect(screen.queryByLabelText('CiberGuardián está escribiendo')).not.toBeInTheDocument());
+      expect(screen.getAllByText(CONTENTION.title)).toHaveLength(1);
     });
 
-    it('muestra la guía de error si falla el análisis', async () => {
+    it('muestra la guía de error si falla el análisis pedido', async () => {
       analyzeMessage.mockRejectedValue(new Error('Network Error'));
-      render(<ChatAssistant sharedMessage={SUSPICIOUS_TEXT} />);
+      render(<ChatAssistant request={{ id: 1, message: SUSPICIOUS_TEXT }} />);
 
       expect(await screen.findByText(ANALYSIS_ERROR_TEXT)).toBeInTheDocument();
     });
 
-    it('ignora un texto compartido demasiado corto', () => {
-      render(<ChatAssistant sharedMessage="ok" />);
+    it('ignora un mensaje pedido demasiado corto', () => {
+      render(<ChatAssistant request={{ id: 1, message: 'ok' }} />);
 
       expect(analyzeMessage).not.toHaveBeenCalled();
       expect(screen.queryByText('ok')).not.toBeInTheDocument();

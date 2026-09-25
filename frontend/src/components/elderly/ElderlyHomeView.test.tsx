@@ -12,17 +12,27 @@ describe('ElderlyHomeView', () => {
     expect(screen.getByRole('button', { name: /Me están llamando y tengo miedo/ })).toBeInTheDocument();
   });
 
-  it('revisar un mensaje abre el análisis y la llamada abre la ayuda inmediata', async () => {
+  it('revisar un mensaje abre el análisis', async () => {
     const user = userEvent.setup();
     const onAction = vi.fn();
     render(<ElderlyHomeView onAction={onAction} />);
 
     await user.click(screen.getByRole('button', { name: /Pegar mensaje/ }));
-    expect(onAction).toHaveBeenLastCalledWith('ANALYZE');
+    expect(onAction).toHaveBeenCalledExactlyOnceWith('ANALYZE');
+  });
+
+  it('"me están llamando" abre la pantalla antipánico y "Volver" regresa a los 3 botones', async () => {
+    const user = userEvent.setup();
+    const onAction = vi.fn();
+    render(<ElderlyHomeView onAction={onAction} />);
 
     await user.click(screen.getByRole('button', { name: /Me están llamando/ }));
-    expect(onAction).toHaveBeenLastCalledWith('DURING_CALL');
-    expect(onAction).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole('heading', { name: /Cortá la llamada ya/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Pegar mensaje/ })).not.toBeInTheDocument();
+    expect(onAction).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'Volver' }));
+    expect(screen.getByRole('heading', { name: '¿En qué te ayudamos?' })).toBeInTheDocument();
   });
 
   it('avisar a un familiar abre WhatsApp con el pedido de ayuda, en otra pestaña', () => {
