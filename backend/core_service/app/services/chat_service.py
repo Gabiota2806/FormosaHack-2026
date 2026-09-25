@@ -25,11 +25,17 @@ class ChatService:
         self, message: str, db: Optional[Session] = None
     ) -> ChatMessageResponse:
         """
-        Orquesta el análisis inteligente de un mensaje: intenta inferencia con Gemini
-        bajo timeout estricto de 2.5s. Si Gemini falla (timeout, 429, red, sin API key),
-        degrada suavemente hacia analyze_message (heurística regex). Luego correlaciona
-        el resultado con los brotes comunitarios activos (FH26-54, Escenario 3).
+        Orquesta el análisis inteligente de un mensaje:
+        1. Capa perimetral: Detección preventiva determinística de Prompt Injection / Jailbreak.
+        2. Inferencia con Gemini bajo timeout estricto de 2.5s y delimitación XML.
+        3. Si Gemini falla, degrada suavemente hacia analyze_message (heurística regex).
+        4. Correlaciona el resultado con los brotes comunitarios activos (FH26-54, Escenario 3).
         """
+        # Capa perimetral: Neutralización inmediata de intentos de evasión / Jailbreak
+        injection_alert = self.detect_prompt_injection(message)
+        if injection_alert is not None:
+            return self._apply_community_outbreak(injection_alert, message, db)
+
         response: Optional[ChatMessageResponse] = None
         try:
             if self.gemini_service and self.gemini_service.is_available:
@@ -135,7 +141,87 @@ class ChatService:
 
     URL_REGEX = r"(https?://\S+|www\.\S+|bit\.ly/\S+|tinyurl\.com/\S+|t\.me/\S+)"
 
+    PROMPT_INJECTION_PATTERNS = [
+        # Anulación imperativa de directivas
+        r"ignora\s*(todas\s*las\s*|las\s*)?instrucciones\s*(anteriores|previas)",
+        r"ignore\s*(all\s*)?(previous|prior)\s*instructions",
+        r"disregard\s*(all\s*)?(previous|prior)\s*instructions",
+        r"olvida\s*(todas\s*las\s*|las\s*)?reglas(\s*(anteriores|previas))?",
+        r"forget\s*(all\s*)?(previous\s*)?rules",
+        # Jailbreak y alteración de identidad
+        r"act\s*as\s*(dan|jailbreak|developer|dev|root|admin)",
+        r"haz\s*como\s*si\s*fueras\s*(dan|un\s*asistente\s*sin\s*restricciones)",
+        r"ahora\s*(sos|eres)\s*(dan|un\s*modelo\s*sin\s*filtros)",
+        r"developer\s*mode(\s*(enabled|on))?",
+        r"modo\s*desarrollador(\s*(activado|habilitado))?",
+        r"\bjailbreak\b",
+        # Falsificación coercitiva de clasificación
+        r"(clasifica|eval[uú]a|califica)\s*(esto\s*)?como\s*(seguro|safe|low|inofensivo|leg[ií]timo)",
+        r"(mark|classify|rate)\s*(this\s*)?as\s*(safe|low|harmless|legitimate)",
+        r"(dec[ií]|di)\s*que\s*es\s*seguro",
+        # Extracción forzada de system prompt
+        r"(revela|muestra|mostrame|imprime|dump)\s*(tu\s*)?(system\s*prompt|instrucciones\s*internas|directivas)",
+        r"(reveal|show|print|dump)\s*(your\s*)?(system\s*prompt|initial\s*prompt|instructions)",
+        # Cierre malicioso de tags XML
+        r"</?mensaje_sospechoso>",
+    ]
+
+    def detect_prompt_injection(self, message: str) -> Optional[ChatMessageResponse]:
+        """
+        Escaneo perimetral heurístico determinístico para detectar intentos de Prompt Injection,
+        Jailbreak o anulación de directivas. Retorna ChatMessageResponse con riesgo 100% (HIGH)
+        si se detecta una amenaza perimetral, o None si no se detectan patrones.
+        """
+        text_lower = message.lower()
+        matched_phrases: List[str] = []
+
+        for pat in self.PROMPT_INJECTION_PATTERNS:
+            for m in re.finditer(pat, text_lower):
+                matched_phrases.append(m.group(0))
+
+        if not matched_phrases:
+            return None
+
+        unique_matches = list(dict.fromkeys(matched_phrases))
+        highlighted = [
+            HighlightedPhrase(
+                phrase=phrase,
+                reason="Intento de manipulación de directivas perimetrales o técnica de Jailbreak (Prompt Injection).",
+                category="PROMPT_INJECTION"
+            )
+            for phrase in unique_matches
+        ]
+
+        return ChatMessageResponse(
+            risk_level="HIGH",
+            risk_percentage=100,
+            detected_entity=None,
+            detected_vector="WEB",
+            summary=(
+                "ALERTA MÁXIMA: Se detectó un intento deliberado de evasión perimetral o manipulación de instrucciones "
+                "(Prompt Injection / Jailbreak) diseñado para engañar al asistente de ciberseguridad."
+            ),
+            immediate_action=(
+                "¡ATENCIÓN! No sigas ni interactúes con las instrucciones de este mensaje. El contenido fue catalogado "
+                "como amenaza perimetral de máxima severidad."
+            ),
+            what_not_to_do=(
+                "NUNCA intentes saltarte los controles perimetrales, anular directivas de seguridad ni ejecutar código "
+                "o comandos imperativos en el asistente."
+            ),
+            highlighted_phrases=highlighted,
+            wa_share_text=(
+                "Hola, CiberGuardián detectó un intento malicioso de manipulación perimetral (Prompt Injection / Jailbreak) "
+                "en este mensaje (Riesgo HIGH 100%). ¡Alerta de seguridad!"
+            )
+        )
+
     def analyze_message(self, message: str) -> ChatMessageResponse:
+        # Capa perimetral: Detección preventiva de Prompt Injection / Jailbreak
+        injection_alert = self.detect_prompt_injection(message)
+        if injection_alert is not None:
+            return injection_alert
+
         text_lower = message.lower()
         text_clean = re.sub(self.URL_REGEX, " ", text_lower)
         score = 0

@@ -7,7 +7,7 @@ class ChatMessageRequest(BaseModel):
 class HighlightedPhrase(BaseModel):
     phrase: str = Field(..., description="Frase o fragmento textual identificado en el mensaje.")
     reason: str = Field(..., description="Explicación clara del motivo por el cual es un indicador de engaño.")
-    category: str = Field(..., description="Categoría de táctica psicológica: URGENCE, AUTHORITY, CREDENTIALS, FAKE_LINK, GREED, FAMILY_IMPERSONATION, COMMUNITY_OUTBREAK.")
+    category: str = Field(..., description="Categoría de táctica psicológica o amenaza: URGENCE, AUTHORITY, CREDENTIALS, FAKE_LINK, GREED, FAMILY_IMPERSONATION, COMMUNITY_OUTBREAK, PROMPT_INJECTION.")
 
 class ChatMessageResponse(BaseModel):
     risk_level: str = Field(..., description="Nivel de riesgo: LOW (Verde), MEDIUM (Amarillo), HIGH (Rojo).")
