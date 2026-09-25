@@ -7,9 +7,10 @@ import {
   ShieldAlert, 
   Lock, 
   QrCode, 
-  CheckCircle
+  CheckCircle,
+  LogOut
 } from 'lucide-react';
-import { api } from './services/api';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThreatRadar } from './components/radar/ThreatRadar';
 import { SosModal } from './components/sos/SosModal';
 import { LandingPage } from './components/landing/LandingPage';
@@ -45,9 +46,11 @@ export function App() {
   const [sharedMessage] = useState(() => readSharedMessage(window.location.search));
 
   return (
-    <ChatWidgetProvider initialMessage={sharedMessage?.text}>
-      <AppShell sharedMessage={sharedMessage} />
-    </ChatWidgetProvider>
+    <AuthProvider>
+      <ChatWidgetProvider initialMessage={sharedMessage?.text}>
+        <AppShell sharedMessage={sharedMessage} />
+      </ChatWidgetProvider>
+    </AuthProvider>
   );
 }
 
@@ -120,58 +123,49 @@ function AppShell({ sharedMessage }: { sharedMessage: SharedMessage | null }) {
     );
   }, [sharedMessage]);
 
-  // Estado de 2FA & Auth
+  // Estado de 2FA & Auth desacoplado en AuthContext
+  const {
+    user,
+    isAuthenticated,
+    is2FAPending,
+    totpStatus,
+    login,
+    register,
+    logout,
+    setup2FA,
+    verify2FA,
+  } = useAuth();
+
   const [userEmail, setUserEmail] = useState('');
   const [userPassword, setUserPassword] = useState('');
   const [userName, setUserName] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [qrCodeData, setQrCodeData] = useState<string | null>(null);
-  const [totpSecret, setTotpSecret] = useState<string | null>(null);
+  const [totpCode, setTotpCode] = useState('');
   const [verifyCode, setVerifyCode] = useState('');
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await api.post('/api/auth/register', {
-        name: userName,
-        email: userEmail,
-        password: userPassword,
-      });
-      toast.success('Usuario registrado con éxito. Ahora podés iniciar sesión.');
-    } catch {}
+    const ok = await register(userName, userEmail, userPassword);
+    if (ok) {
+      setUserName('');
+      setUserPassword('');
+    }
   };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const res = await api.post('/api/auth/login', {
-        email: userEmail,
-        password: userPassword,
-      });
-      if (res.data.access_token) {
-        localStorage.setItem('access_token', res.data.access_token);
-        setIsLoggedIn(true);
-        toast.success('Sesión iniciada correctamente');
-      }
-    } catch {}
+    await login(userEmail, userPassword, totpCode || undefined);
   };
 
   const handleSetup2FA = async () => {
-    try {
-      const res = await api.post('/api/auth/2fa/setup');
-      setQrCodeData(res.data.qr_code_base64);
-      setTotpSecret(res.data.secret);
-      toast.success('Código QR generado. Escanealo con Google Authenticator.');
-    } catch {}
+    await setup2FA();
   };
 
   const handleVerify2FA = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await api.post('/api/auth/2fa/verify', { code: verifyCode });
-      toast.success('¡Segundo Factor (2FA) activado exitosamente!');
-      setQrCodeData(null);
-    } catch {}
+    const ok = await verify2FA(verifyCode);
+    if (ok) {
+      setVerifyCode('');
+    }
   };
 
   return (
@@ -264,17 +258,24 @@ function AppShell({ sharedMessage }: { sharedMessage: SharedMessage | null }) {
         {activeTab === 'auth' && (
           <div className="max-w-2xl mx-auto space-y-8">
             <Card tone="dark" className="rounded-3xl p-6 sm:p-8 animate-fade-up">
-              <div className="flex items-center gap-3 mb-6">
-                <IconBadge icon={Lock} tone="solid" size="md" />
-                <div>
-                  <h2 className="text-xl font-bold text-white">Segundo Factor de Autenticación (2FA TOTP)</h2>
-                  <p className="text-xs text-slate-400">
-                    Módulo de seguridad perimetral obligatorio para administradores y moderadores del sistema.
-                  </p>
+              <div className="flex items-center justify-between mb-6 gap-3">
+                <div className="flex items-center gap-3">
+                  <IconBadge icon={Lock} tone="solid" size="md" />
+                  <div>
+                    <h2 className="text-xl font-bold text-white">Segundo Factor de Autenticación (2FA TOTP)</h2>
+                    <p className="text-xs text-slate-400">
+                      Módulo de seguridad perimetral obligatorio para administradores y moderadores del sistema.
+                    </p>
+                  </div>
                 </div>
+                {isAuthenticated && (
+                  <Button variant="ghost" icon={LogOut} onClick={logout} className="text-xs shrink-0">
+                    Cerrar Sesión
+                  </Button>
+                )}
               </div>
 
-              {!isLoggedIn ? (
+              {!isAuthenticated ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Registro */}
                   <form onSubmit={handleRegister} className="space-y-3">
@@ -336,31 +337,54 @@ function AppShell({ sharedMessage }: { sharedMessage: SharedMessage | null }) {
                       required
                       className={AUTH_INPUT_CLASSES}
                     />
+                    {is2FAPending && (
+                      <input
+                        type="text"
+                        aria-label="Código 2FA (6 dígitos)"
+                        placeholder="Código 2FA (6 dígitos)"
+                        maxLength={6}
+                        value={totpCode}
+                        onChange={(e) => setTotpCode(e.target.value)}
+                        required
+                        className={`${AUTH_INPUT_CLASSES} border-brand-400 font-mono`}
+                      />
+                    )}
                     <Button type="submit" className="w-full">
-                      Iniciar Sesión
+                      {is2FAPending ? 'Validar Código 2FA' : 'Iniciar Sesión'}
                     </Button>
                   </form>
                 </div>
               ) : (
                 <div className="space-y-6">
-                  <div className="p-4 rounded-2xl bg-brand-500/10 border border-brand-500/40 text-brand-300 text-xs flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5 text-brand-400 shrink-0" aria-hidden="true" />
-                    Sesión iniciada correctamente con token JWT asimétrico.
+                  <div className="p-4 rounded-2xl bg-brand-500/10 border border-brand-500/40 text-brand-300 text-xs flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5 text-brand-400 shrink-0" aria-hidden="true" />
+                      <span>
+                        Sesión iniciada como <strong>{user?.name || user?.email || 'Administrador'}</strong> ({user?.role || 'user'}).
+                      </span>
+                    </div>
+                    {totpStatus.enabled && (
+                      <span className="px-2.5 py-0.5 rounded-full bg-brand-500/20 text-brand-300 text-[11px] font-semibold">
+                        2FA Activo
+                      </span>
+                    )}
                   </div>
 
-                  {!qrCodeData ? (
+                  {!totpStatus.qrCode ? (
                     <Button icon={QrCode} onClick={handleSetup2FA}>
-                      Enrolar Segundo Factor (2FA TOTP)
+                      {totpStatus.enabled ? 'Reconfigurar Segundo Factor (2FA TOTP)' : 'Enrolar Segundo Factor (2FA TOTP)'}
                     </Button>
                   ) : (
                     <Card className="p-5 text-center space-y-4">
                       <p className="text-sm text-slate-600">
                         Escaneá el código QR con Google Authenticator o Authy:
                       </p>
-                      <img src={qrCodeData} alt="Código QR 2FA" className="mx-auto rounded-xl border border-slate-200 p-2 bg-white" />
-                      <code className="text-[11px] font-mono text-slate-700 bg-slate-100 px-3 py-1.5 rounded-lg inline-block">
-                        {totpSecret}
-                      </code>
+                      <img src={totpStatus.qrCode} alt="Código QR 2FA" className="mx-auto rounded-xl border border-slate-200 p-2 bg-white" />
+                      {totpStatus.secret && (
+                        <code className="text-[11px] font-mono text-slate-700 bg-slate-100 px-3 py-1.5 rounded-lg inline-block">
+                          {totpStatus.secret}
+                        </code>
+                      )}
 
                       <form onSubmit={handleVerify2FA} className="max-w-xs mx-auto flex gap-2 pt-2">
                         <input

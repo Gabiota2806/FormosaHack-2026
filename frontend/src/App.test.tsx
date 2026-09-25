@@ -29,6 +29,19 @@ vi.mock('./services/api', () => ({
       active_outbreaks_24h: 1,
     }),
   },
+  authApi: {
+    register: vi.fn(),
+    login: vi.fn(),
+    getMe: vi.fn(),
+    setup2FA: vi.fn(),
+    verify2FA: vi.fn(),
+  },
+  historyApi: {
+    claim: vi.fn(),
+    list: vi.fn(),
+    getEntry: vi.fn(),
+    deleteEntry: vi.fn(),
+  },
 }));
 
 const analyzeMessage = vi.mocked(chatApi.analyzeMessage);
@@ -313,3 +326,47 @@ describe('App: enlace profundo de notificaciones push (FH26-75)', () => {
     expect(screen.getByRole('button', { name: 'Inicio' })).toHaveAttribute('aria-current', 'page');
   });
 });
+
+describe('App: pestaña 2FA & Auth con AuthContext', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    window.history.replaceState(null, '', '/');
+  });
+
+  it('permite iniciar sesión en la pestaña 2FA & Auth y muestra el estado autenticado', async () => {
+    const user = userEvent.setup();
+    const { authApi } = await import('./services/api');
+    vi.mocked(authApi.login).mockResolvedValueOnce({
+      access_token: 'fake-jwt-token',
+      token_type: 'bearer',
+      requires_2fa: false,
+    });
+    vi.mocked(authApi.getMe).mockResolvedValueOnce({
+      id: 1,
+      name: 'Gabriel Admin',
+      email: 'gabriel@formosa.gob.ar',
+      role: 'admin',
+      is_totp_enabled: true,
+    });
+
+    render(<App />, { wrapper: ElderlyModeProvider });
+
+    await user.click(screen.getByRole('button', { name: '2FA & Auth' }));
+    expect(screen.getByRole('heading', { name: 'Iniciar Sesión' })).toBeInTheDocument();
+
+    const emailInputs = screen.getAllByLabelText('Correo electrónico');
+    const passwordInputs = screen.getAllByLabelText('Contraseña');
+
+    await user.type(emailInputs[1], 'gabriel@formosa.gob.ar');
+    await user.type(passwordInputs[1], 'password123');
+    await user.click(screen.getByRole('button', { name: 'Iniciar Sesión' }));
+
+    expect(await screen.findByText(/Sesión iniciada como/)).toBeInTheDocument();
+    expect(screen.getByText('2FA Activo')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cerrar Sesión' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Cerrar Sesión' }));
+    expect(await screen.findByRole('heading', { name: 'Iniciar Sesión' })).toBeInTheDocument();
+  });
+});
+

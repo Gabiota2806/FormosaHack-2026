@@ -93,3 +93,77 @@ export interface ChatFollowupResponse {
   /** La respondió el motor heurístico local (Gemini no disponible). */
   is_fallback: boolean;
 }
+
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  is_totp_enabled: boolean;
+  created_at?: string;
+}
+
+export interface LoginPayload {
+  email: string;
+  password: string;
+  totp_code?: string;
+}
+
+export interface RegisterPayload {
+  name: string;
+  email: string;
+  password: string;
+  role?: string;
+}
+
+export interface TokenResponse {
+  access_token?: string;
+  token_type?: string;
+  requires_2fa?: boolean;
+  temp_token?: string;
+}
+
+export interface TOTPSetupResponse {
+  secret: string;
+  qr_code_base64: string;
+  provisioning_uri: string;
+}
+
+export interface TOTPVerifyResponse {
+  message: string;
+  is_totp_enabled: boolean;
+}
+
+export interface ChatHistoryEntry {
+  id: number;
+  session_id: number;
+  user_id?: number | null;
+  message: string;
+  risk_level: string;
+  risk_percentage: number;
+  detected_entity?: string | null;
+  detected_vector?: string | null;
+  summary: string;
+  immediate_action: string;
+  what_not_to_do: string;
+  highlighted_phrases: HighlightedPhrase[];
+  wa_share_text: string;
+  active: boolean;
+  created_at: string;
+}
+
+export interface ChatHistoryPage {
+  items: ChatHistoryEntry[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface ChatSessionOut {
+  id: number;
+  session_key: string;
+  user_id?: number | null;
+  active: boolean;
+  created_at: string;
+}
+
