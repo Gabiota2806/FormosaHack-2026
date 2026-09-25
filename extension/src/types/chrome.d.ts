@@ -15,6 +15,7 @@ declare namespace chrome.tabs {
     title?: string;
     active?: boolean;
   }
+  function create(createProperties: { url?: string; active?: boolean }): Promise<Tab>;
 }
 
 declare namespace chrome.contextMenus {
@@ -54,6 +55,16 @@ declare namespace chrome.storage {
     remove(keys: string | string[]): Promise<void>;
     clear(): Promise<void>;
   }
+
+  interface StorageChange {
+    oldValue?: unknown;
+    newValue?: unknown;
+  }
+
+  const onChanged: {
+    addListener(callback: (changes: Record<string, StorageChange>, areaName: string) => void): void;
+    removeListener(callback: (changes: Record<string, StorageChange>, areaName: string) => void): void;
+  };
 
   const local: StorageArea;
   const sync: StorageArea;

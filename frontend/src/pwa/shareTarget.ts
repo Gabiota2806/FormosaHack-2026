@@ -4,7 +4,7 @@
 // Límite del backend (ChatMessageRequest.message).
 export const SHARED_MESSAGE_MAX_LENGTH = 2000;
 
-const SHARE_PARAMS = ['title', 'text', 'url'] as const;
+const SHARE_PARAMS = ['title', 'text', 'url', 'analyze'] as const;
 
 export interface SharedMessage {
   text: string;
@@ -14,7 +14,15 @@ export interface SharedMessage {
 /** Arma el mensaje a analizar con lo compartido, o null si no llegó nada. */
 export function readSharedMessage(search: string): SharedMessage | null {
   const params = new URLSearchParams(search);
-  const [title, text, url] = SHARE_PARAMS.map((key) => params.get(key)?.trim() ?? '');
+  const analyze = params.get('analyze')?.trim();
+  if (analyze) {
+    return {
+      text: analyze.slice(0, SHARED_MESSAGE_MAX_LENGTH),
+      truncated: analyze.length > SHARED_MESSAGE_MAX_LENGTH,
+    };
+  }
+
+  const [title, text, url] = ['title', 'text', 'url'].map((key) => params.get(key)?.trim() ?? '');
 
   // Cada app completa los campos distinto: WhatsApp manda todo en "text" y otras
   // repiten el link en "text" y en "url". Se evita duplicar.

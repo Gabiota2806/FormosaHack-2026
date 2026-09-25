@@ -79,6 +79,16 @@ describe('App: mensaje compartido (Web Share Target)', () => {
     expect(analyzeMessage).toHaveBeenCalledTimes(1);
   });
 
+  it('abre el chat y analiza automáticamente cuando llega el parámetro ?analyze de la extensión', async () => {
+    const extensionUrl = 'https://bancoformosa-gestion.falsa.net';
+    window.history.replaceState(null, '', `/?analyze=${encodeURIComponent(extensionUrl)}`);
+    render(<App />, { wrapper: ElderlyModeProvider });
+
+    expect(await screen.findByText('ALERTA ROJA: intento de estafa.')).toBeInTheDocument();
+    expect(analyzeMessage).toHaveBeenCalledWith(extensionUrl);
+    expect(window.location.search).toBe('');
+  });
+
   it('con StrictMode analiza el mensaje compartido una sola vez', async () => {
     render(
       <StrictMode>
