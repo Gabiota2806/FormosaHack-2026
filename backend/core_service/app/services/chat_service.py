@@ -31,6 +31,17 @@ class ChatService:
         "ingres[aá] tu pin", "descarg[aá] esta app", "anydesk", "teamviewer"
     ]
 
+    FAMILY_IMPERSONATION_PATTERNS = [
+        r"hola\s*m[aá][,\s]",
+        r"hola\s*p[aá][,\s]",
+        r"cambi[eé]\s*de\s*n[uú]mero",
+        r"n[uú]mero\s*nuevo",
+        r"se\s*rompi[oó]\s*(mi\s*)?(celular|tel[eé]fono)",
+        r"se\s*moj[oó]\s*(el\s*)?(celular|tel[eé]fono)",
+        r"c[oó]digo\s*que\s*te\s*lleg[oó]\s*por\s*(sms|whatsapp)",
+    ]
+    FAMILY_IMPERSONATION_WEIGHT = 45
+
     GREED_KEYWORDS = [
         "ganaste", "premio", "sorteo", "beneficiario", "acreditaci[oó]n pendiente",
         "subsidio", "felicidades", "fuiste seleccionad[oa]"
@@ -40,6 +51,7 @@ class ChatService:
 
     def analyze_message(self, message: str) -> ChatMessageResponse:
         text_lower = message.lower()
+        text_clean = re.sub(self.URL_REGEX, " ", text_lower)
         score = 0
         highlighted: List[HighlightedPhrase] = []
         detected_entity = None
@@ -73,7 +85,7 @@ class ChatService:
 
         # 3. Pedido de credenciales o acciones peligrosas
         for kw in self.CREDENTIAL_KEYWORDS:
-            matches = list(re.finditer(kw, text_lower))
+            matches = list(re.finditer(kw, text_clean))
             for m in matches:
                 score += 35
                 highlighted.append(HighlightedPhrase(
@@ -82,9 +94,21 @@ class ChatService:
                     category="CREDENTIALS"
                 ))
 
+        # 3b. Detección de estafa familiar "Hola má, cambié de número" (peso alto por sí sola)
+        for pat in self.FAMILY_IMPERSONATION_PATTERNS:
+            match = re.search(pat, text_clean)
+            if match:
+                score += self.FAMILY_IMPERSONATION_WEIGHT
+                highlighted.append(HighlightedPhrase(
+                    phrase=match.group(0),
+                    reason="Patrón típico de estafa familiar en WhatsApp: suplantan a un hijo/familiar cambiando de número y piden códigos de verificación.",
+                    category="FAMILY_IMPERSONATION"
+                ))
+                break
+
         # 4. Promesas de dinero fácil o premios falsos
         for kw in self.GREED_KEYWORDS:
-            matches = list(re.finditer(kw, text_lower))
+            matches = list(re.finditer(kw, text_clean))
             for m in matches:
                 score += 20
                 highlighted.append(HighlightedPhrase(
@@ -113,7 +137,7 @@ class ChatService:
         if risk_percentage >= 60:
             risk_level = "HIGH"
             summary = (
-                f"🚨 ALERTA ROJA: Este mensaje presenta señales inequívocas de INTENTO DE ESTAFA "
+                f"ALERTA ROJA: Este mensaje presenta señales inequívocas de INTENTO DE ESTAFA "
                 f"{f'suplantando a {detected_entity}' if detected_entity else ''}."
             )
             immediate_action = "¡FRENÁ INMEDIATAMENTE! No abras ningún enlace, no respondas y no transfieras dinero."
@@ -121,14 +145,14 @@ class ChatService:
         elif risk_percentage >= 30:
             risk_level = "MEDIUM"
             summary = (
-                "⚠️ PRECAUCIÓN: El mensaje contiene elementos sospechosos o lenguaje manipulativo de urgencia. "
+                "PRECAUCIÓN: El mensaje contiene elementos sospechosos o lenguaje manipulativo de urgencia. "
                 "No actúes bajo presión."
             )
             immediate_action = "Verificá la información comunicándote con los números oficiales de la entidad por tu cuenta."
             what_not_to_do = "No utilices los enlaces ni los números de teléfono incluidos dentro de este mensaje."
         else:
             risk_level = "LOW"
-            summary = "✅ RIESGO BAJO: No se detectan patrones evidentes de estafa ni pedidos de información confidencial."
+            summary = "RIESGO BAJO: No se detectan patrones evidentes de estafa ni pedidos de información confidencial."
             immediate_action = "Podés continuar con normalidad, recordando siempre no compartir contraseñas."
             what_not_to_do = "No compartas datos bancarios si en un próximo mensaje te lo solicitan."
 
