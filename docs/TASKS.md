@@ -12,8 +12,8 @@
 
 ## 📊 Métricas Vivas del Sprint 1
 * **Capacidad Total del Sprint:** 50 Story Points
-* **Story Points Completados:** **16 SP (Listo ✅)** — *27.5% de avance inicial demostrable ante los jueces*
-* **Story Points Pendientes:** **34 SP (Por hacer ⏳)** — *Asignados a las duplas para las próximas horas*
+ * **Story Points Completados:** **19 SP (Listo ✅)** — *30% de avance inicial demostrable ante los jueces*
+* **Story Points Pendientes:** **31 SP (Por hacer ⏳)** — *Asignados a las duplas para las próximas horas*
 * **Estructura Jerárquica:** 5 Épicas → 9 Historias de Usuario BDD → 18 Subtareas Técnicas
 
 ---
@@ -104,7 +104,7 @@
   * **Escenario 2:** *Dado un incidente en el radar, cuando el usuario pulsa "A mí también me llegó", entonces el endpoint incrementa votos atómicamente y actualiza la tarjeta.*
 * **Subtareas Técnicas Anidadas:**
   * ⏳ **`FH26-45`** — `[TASK-006]` `[Maxi]` Modelado de Incidentes y Reportes con Soft Delete (3 SP) — `Por hacer`
-  * ⏳ **`FH26-46`** — `[TASK-007]` `[Maxi]` Repository Pattern en Core Service (Router->Service->Repo) (3 SP) — `Por hacer`
+  * ✅ **`FH26-46`** — `[TASK-007]` `[Maxi]` Repository Pattern en Core Service (Router->Service->Repo) (3 SP) — `Listo`
   * ⏳ **`FH26-47`** — `[TASK-008]` `[Maxi]` Endpoints de Radar Paginado en Servidor y Filtros (5 SP) — `Por hacer`
   * ⏳ **`FH26-48`** — `[TASK-009]` `[Maxi]` Seeder de Estafas Reales y Canales Verificados (2 SP) — `Por hacer`
   * ⏳ **`FH26-49`** — `[TASK-015]` `[Valeria]` Vista del Radar de Amenazas con "A mí también me llegó" (3 SP) — `Por hacer`
@@ -138,7 +138,7 @@
 
 ## 🎯 Asignación Oficial de Trabajo por Duplas (Sprint 1)
 * **Dupla Backend (Gabriel Pineda + Maxi González):**
-  * Maxi González: `FH26-45`, `FH26-46`, `FH26-47`, `FH26-48` (13 SP pendientes).
+  * Maxi González: `FH26-45`, `FH26-47`, `FH26-48` (10 SP pendientes).
   * Gabriel Pineda: `FH26-39` (3 SP pendientes) + Integración y Soporte de Infraestructura.
 * **Dupla Frontend (Matías + Valeria Budiño):**
   * Matías: `FH26-40`, `FH26-41`, `FH26-42` (10 SP pendientes).
