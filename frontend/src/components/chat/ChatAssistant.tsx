@@ -4,10 +4,13 @@ import { toast } from 'sonner';
 import { chatApi } from '../../services/api';
 import type { ChatAnalysisResponse } from '../../types';
 import { Button } from '../ui/Button';
+import { cn } from '../ui/cn';
 import { IconBadge } from '../ui/IconBadge';
 import { ChatBubble } from './ChatBubble';
 import { ContentionCard } from './ContentionCard';
 import { RiskAnalysisCard } from './RiskAnalysisCard';
+import { ElderlyVerdictCard } from '../elderly/ElderlyVerdictCard';
+import { useElderlyMode } from '../elderly/elderlyMode';
 import { TypingIndicator } from './TypingIndicator';
 import {
   AFTER_CONTENTION_TEXT,
@@ -61,6 +64,9 @@ export function ChatAssistant({
   onRequestHandled,
   onActivityChange,
 }: ChatAssistantProps) {
+  // En Modo Abuelo el análisis se muestra como un veredicto simple, sin porcentajes ni jerga, y en
+  // celular se esconde lo accesorio del chat: con la letra de 22px, la conversación quedaba en una franja.
+  const { enabled: elderlyMode } = useElderlyMode();
   const [messages, setMessages] = useState<ChatMessage[]>([WELCOME_MESSAGE]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -82,8 +88,17 @@ export function ChatAssistant({
 
   useEffect(() => {
     const el = scrollRef.current;
-    el?.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
-  }, [messages, isTyping]);
+    if (!el) return;
+    const last = messages[messages.length - 1];
+    const lastNode = el.lastElementChild;
+    // En Modo Abuelo el veredicto es más alto que la conversación: se muestra desde su título, no desde el final.
+    if (elderlyMode && !isTyping && last.role === 'bot' && last.kind === 'analysis' && lastNode) {
+      const top = el.scrollTop + lastNode.getBoundingClientRect().top - el.getBoundingClientRect().top - 12;
+      el.scrollTo({ top, behavior: 'smooth' });
+      return;
+    }
+    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+  }, [messages, isTyping, elderlyMode]);
 
   const pushMessages = useCallback((...newMessages: NewChatMessage[]) => {
     setMessages((prev) => [
@@ -259,14 +274,24 @@ export function ChatAssistant({
         );
       case 'analysis':
         return (
-          <ChatBubble role="bot" wide>
-            <RiskAnalysisCard
-              analysis={msg.analysis}
-              sourceText={msg.sourceText}
-              onShareWhatsApp={() => handleShareWhatsApp(msg.analysis, msg.sourceText)}
-              onReport={onReportIncident ? () => handleReport(msg.analysis, msg.sourceText) : undefined}
-            />
-          </ChatBubble>
+          // En Modo Abuelo el veredicto va a todo el ancho, sin el avatar: con la letra de 22px no entraba.
+          elderlyMode ? (
+            <div className="animate-bubble-in">
+              <ElderlyVerdictCard
+                analysis={msg.analysis}
+                onShareWhatsApp={() => handleShareWhatsApp(msg.analysis, msg.sourceText)}
+              />
+            </div>
+          ) : (
+            <ChatBubble role="bot" wide>
+              <RiskAnalysisCard
+                analysis={msg.analysis}
+                sourceText={msg.sourceText}
+                onShareWhatsApp={() => handleShareWhatsApp(msg.analysis, msg.sourceText)}
+                onReport={onReportIncident ? () => handleReport(msg.analysis, msg.sourceText) : undefined}
+              />
+            </ChatBubble>
+          )
         );
       case 'contention':
         return (
@@ -283,7 +308,7 @@ export function ChatAssistant({
       <div className="px-4 sm:px-6 py-3 border-b border-slate-700/70 bg-slate-800/80 flex items-center justify-between gap-3">
         <div>
           <h2 className="font-bold text-white leading-tight">Asistente CiberGuardián</h2>
-          <p className="text-xs text-slate-400 flex items-center gap-1.5">
+          <p className={cn('text-xs text-slate-400 flex items-center gap-1.5', elderlyMode && 'max-sm:hidden')}>
             <span className="w-1.5 h-1.5 rounded-full bg-brand-400" aria-hidden="true" />
             Sin registro · No guardamos tus mensajes
           </p>
@@ -291,7 +316,7 @@ export function ChatAssistant({
         <div className="flex shrink-0 items-center gap-1">
           {hasStarted && (
             <Button variant="ghost" size="sm" icon={RotateCcw} onClick={handleReset}>
-              Nueva consulta
+              <span className={cn(elderlyMode && 'max-sm:sr-only')}>Nueva consulta</span>
             </Button>
           )}
           {headerActions}
@@ -319,7 +344,7 @@ export function ChatAssistant({
       {/* Compositor */}
       <div className="border-t border-slate-700/70 p-3 sm:p-4 space-y-2.5 bg-slate-900/60">
         {hasStarted && (
-          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+          <div className={cn('flex gap-2 overflow-x-auto pb-1 -mx-1 px-1', elderlyMode && 'max-sm:hidden')}>
             {ENTRY_OPTIONS.map((o) => (
               <button
                 key={o.mode}
@@ -368,7 +393,7 @@ export function ChatAssistant({
             aria-label="Analizar mensaje"
           />
         </form>
-        <p className="text-[11px] text-slate-500 flex items-center gap-1">
+        <p className={cn('text-[11px] text-slate-500 flex items-center gap-1', elderlyMode && 'max-sm:hidden')}>
           <ShieldAlert className="w-3 h-3" />
           Esto es una ayuda, no un veredicto. Ante la duda, no actúes.
         </p>

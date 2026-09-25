@@ -1,10 +1,12 @@
 import { StrictMode } from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render as rtlRender, screen, waitFor, type RenderOptions } from '@testing-library/react';
+import type { ReactElement } from 'react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { chatApi } from '../../services/api';
 import type { ChatAnalysisResponse } from '../../types';
 import { ChatAssistant } from './ChatAssistant';
+import { ElderlyModeProvider } from '../elderly/ElderlyModeContext';
 import { ANALYSIS_ERROR_TEXT, CONTENTION, SOS_TEXT } from './scripts';
 
 vi.mock('../../services/api', () => ({
@@ -12,6 +14,9 @@ vi.mock('../../services/api', () => ({
 }));
 
 const analyzeMessage = vi.mocked(chatApi.analyzeMessage);
+
+// ChatAssistant lee el Modo Abuelo del contexto.
+const render = (ui: ReactElement, options?: RenderOptions) => rtlRender(ui, { wrapper: ElderlyModeProvider, ...options });
 
 const HIGH_RISK: ChatAnalysisResponse = {
   risk_level: 'HIGH',
@@ -30,6 +35,7 @@ const SUSPICIOUS_TEXT = 'Banco Formosa: pasame el token urgente';
 describe('ChatAssistant', () => {
   beforeEach(() => {
     analyzeMessage.mockReset();
+    localStorage.clear();
   });
 
   it('saluda y ofrece los 3 momentos de entrada', () => {
@@ -156,5 +162,18 @@ describe('ChatAssistant', () => {
       expect(analyzeMessage).not.toHaveBeenCalled();
       expect(screen.queryByText('ok')).not.toBeInTheDocument();
     });
+  });
+
+  it('en Modo Abuelo muestra el veredicto simple en lugar del semáforo', async () => {
+    localStorage.setItem('ciberguardian_modo_abuelo', 'true');
+    const user = userEvent.setup();
+    analyzeMessage.mockResolvedValue(HIGH_RISK);
+    render(<ChatAssistant />);
+
+    await user.type(screen.getByLabelText('Mensaje sospechoso'), `${SUSPICIOUS_TEXT}{Enter}`);
+
+    expect(await screen.findByText('¡Cuidado! Es una trampa para sacarte plata')).toBeInTheDocument();
+    expect(screen.queryByText('Probabilidad de engaño: 85%')).not.toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: /Semáforo/ })).not.toBeInTheDocument();
   });
 });

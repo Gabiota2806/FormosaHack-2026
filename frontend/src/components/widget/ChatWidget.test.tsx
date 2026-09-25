@@ -1,5 +1,5 @@
 import { render as rtlRender, screen, waitFor, type RenderOptions } from '@testing-library/react';
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { chatApi } from '../../services/api';
@@ -8,6 +8,7 @@ import { CONTENTION, WELCOME_TEXT } from '../chat/scripts';
 import { ChatWidget } from './ChatWidget';
 import { CHAT_PANEL_ID } from './ChatWidgetPanel';
 import { ChatWidgetProvider } from './ChatWidgetProvider';
+import { ElderlyModeProvider } from '../elderly/ElderlyModeContext';
 import { useChatWidget, type OpenChatOptions } from './chatWidgetContext';
 
 vi.mock('../../services/api', () => ({
@@ -19,8 +20,16 @@ const setDesktop = (desktop: boolean) => {
   window.matchMedia = vi.fn().mockReturnValue({ matches: desktop }) as unknown as typeof window.matchMedia;
 };
 
-const render = (ui: ReactElement, options?: RenderOptions) =>
-  rtlRender(ui, { wrapper: ChatWidgetProvider, ...options });
+// El chat lee el Modo Abuelo del contexto.
+function Providers({ children }: { children: ReactNode }) {
+  return (
+    <ElderlyModeProvider>
+      <ChatWidgetProvider>{children}</ChatWidgetProvider>
+    </ElderlyModeProvider>
+  );
+}
+
+const render = (ui: ReactElement, options?: RenderOptions) => rtlRender(ui, { wrapper: Providers, ...options });
 
 const panel = () => screen.getByRole('dialog', { name: 'Asistente CiberGuardián', hidden: true });
 const launcher = () => screen.getByRole('button', { name: /(Abrir|Cerrar) asistente CiberGuardián/ });
