@@ -31,7 +31,6 @@ export function ChatWidget({ onOpenSos, onReportIncident }: ChatWidgetProps) {
     <>
       <ChatWidgetPanel isOpen={isOpen} onClose={close}>
         <ChatAssistant
-          variant="embedded"
           onOpenSos={onOpenSos}
           onReportIncident={onReportIncident}
           request={request}

@@ -45,6 +45,8 @@ const HIGH_RISK: ChatAnalysisResponse = {
   wa_share_text: 'Hola, mirá esto.',
 };
 
+const widgetPanel = () => screen.getByRole('dialog', { name: 'Asistente CiberGuardián', hidden: true });
+
 const SHARED = 'Banco Formosa: pasame el token urgente';
 
 describe('App: mensaje compartido (Web Share Target)', () => {
@@ -63,17 +65,30 @@ describe('App: mensaje compartido (Web Share Target)', () => {
     expect(window.location.search).toBe('');
   });
 
-  it('no vuelve a analizarlo al ir a otra pestaña y volver al Asistente', async () => {
+  it('abre el widget con el análisis y no lo repite al cambiar de sección', async () => {
     const user = userEvent.setup();
     render(<App />, { wrapper: ElderlyModeProvider });
     await screen.findByText('ALERTA ROJA: intento de estafa.');
+    expect(widgetPanel()).not.toHaveAttribute('inert');
 
     await user.click(screen.getByRole('button', { name: 'Radar Comunitario' }));
-    await user.click(screen.getByRole('button', { name: 'Asistente' }));
+    await user.click(screen.getByRole('button', { name: 'Inicio' }));
 
-    expect(await screen.findByText(/Hola, soy CiberGuardián/)).toBeInTheDocument();
-    expect(screen.queryByText(SHARED)).not.toBeInTheDocument();
+    // El widget conserva la conversación y no vuelve a pedir el análisis.
+    expect(screen.getByText('ALERTA ROJA: intento de estafa.')).toBeInTheDocument();
     expect(analyzeMessage).toHaveBeenCalledTimes(1);
+  });
+
+  it('con StrictMode analiza el mensaje compartido una sola vez', async () => {
+    render(
+      <StrictMode>
+        <App />
+      </StrictMode>,
+      { wrapper: ElderlyModeProvider },
+    );
+
+    await screen.findByText('ALERTA ROJA: intento de estafa.');
+    expect(analyzeMessage).toHaveBeenCalledExactlyOnceWith(SHARED);
   });
 });
 
@@ -97,7 +112,7 @@ describe('App: landing y navegación', () => {
     const user = userEvent.setup();
     render(<App />, { wrapper: ElderlyModeProvider });
 
-    await user.click(screen.getByRole('button', { name: 'Asistente' }));
+    await user.click(screen.getByRole('button', { name: 'Radar Comunitario' }));
     expect(heroTitle()).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'CiberGuardián: ir al inicio' }));
@@ -114,14 +129,15 @@ describe('App: landing y navegación', () => {
     expect(heroTitle()).toBeInTheDocument();
   });
 
-  it('"Analizar mensaje sospechoso" abre el chat en el flujo de prevención', async () => {
+  it('"Analizar mensaje sospechoso" abre el widget en el flujo de prevención sin salir de la landing', async () => {
     const user = userEvent.setup();
     render(<App />, { wrapper: ElderlyModeProvider });
 
     await user.click(screen.getByRole('button', { name: 'Analizar mensaje sospechoso' }));
 
-    expect(screen.getByRole('button', { name: 'Asistente' })).toHaveAttribute('aria-current', 'page');
+    expect(widgetPanel()).not.toHaveAttribute('inert');
     expect(await screen.findByText(PREVENTION_TEXT)).toBeInTheDocument();
+    expect(heroTitle()).toBeInTheDocument();
   });
 
   it('el momento "Durante" abre el chat en la contención', async () => {
@@ -140,17 +156,41 @@ describe('App: landing y navegación', () => {
     expect(screen.getByRole('dialog', { name: /Protocolo de Auxilio/ })).toBeInTheDocument();
   });
 
-  it('no repite el momento de entrada al volver al chat desde otra sección', async () => {
+  it('la conversación se conserva al cambiar de sección y el momento no se repite', async () => {
     const user = userEvent.setup();
     render(<App />, { wrapper: ElderlyModeProvider });
     await user.click(screen.getByRole('button', { name: 'Analizar mensaje sospechoso' }));
     await screen.findByText(PREVENTION_TEXT);
 
     await user.click(screen.getByRole('button', { name: 'Radar Comunitario' }));
-    await user.click(screen.getByRole('button', { name: 'Asistente' }));
 
     expect(screen.getByText(WELCOME_TEXT)).toBeInTheDocument();
-    expect(screen.queryByText(PREVENTION_TEXT)).not.toBeInTheDocument();
+    expect(screen.getAllByText(PREVENTION_TEXT)).toHaveLength(1);
+  });
+
+  it('no hay pestaña "Asistente": el chat es el widget, presente en todas las secciones', async () => {
+    const user = userEvent.setup();
+    render(<App />, { wrapper: ElderlyModeProvider });
+    const nav = screen.getByRole('navigation', { name: 'Secciones' });
+
+    expect(within(nav).queryByRole('button', { name: 'Asistente' })).not.toBeInTheDocument();
+    for (const section of ['Radar Comunitario', '2FA & Auth', 'Inicio']) {
+      await user.click(within(nav).getByRole('button', { name: section }));
+      expect(screen.getByRole('button', { name: 'Abrir asistente CiberGuardián' })).toBeInTheDocument();
+    }
+  });
+
+  it('"Advertir a la comunidad en el Radar" lleva al Radar y minimiza el widget', async () => {
+    const user = userEvent.setup();
+    analyzeMessage.mockResolvedValue(HIGH_RISK);
+    render(<App />, { wrapper: ElderlyModeProvider });
+
+    await user.click(screen.getByRole('button', { name: 'Analizar mensaje sospechoso' }));
+    await user.type(await screen.findByLabelText('Mensaje sospechoso'), `${SHARED}{Enter}`);
+    await user.click(await screen.findByRole('button', { name: 'Advertir a la comunidad en el Radar' }));
+
+    expect(widgetPanel()).toHaveAttribute('inert');
+    expect(screen.getByRole('button', { name: 'Radar Comunitario' })).toHaveAttribute('aria-current', 'page');
   });
 
   it('con StrictMode la respuesta del momento de entrada sale una sola vez', async () => {

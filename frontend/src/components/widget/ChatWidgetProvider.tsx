@@ -2,11 +2,23 @@ import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ChatWidgetContext, type ChatRequest, type OpenChatOptions } from './chatWidgetContext';
 
 /** Estado global del asistente (FH26-70): vive por encima de las secciones de la app. */
-export function ChatWidgetProvider({ children }: { children: ReactNode }) {
-  const [isOpen, setIsOpen] = useState(false);
+interface ChatWidgetProviderProps {
+  children: ReactNode;
+  /**
+   * Mensaje a analizar apenas arranca la app (compartido desde WhatsApp): el panel empieza
+   * abierto con el pedido ya cargado. En el estado inicial y no en un efecto, para que el
+   * doble montaje de StrictMode no lo pida dos veces.
+   */
+  initialMessage?: string;
+}
+
+export function ChatWidgetProvider({ children, initialMessage }: ChatWidgetProviderProps) {
+  const [isOpen, setIsOpen] = useState(() => Boolean(initialMessage));
   const [hasActiveSession, setHasActiveSession] = useState(false);
-  const [request, setRequest] = useState<ChatRequest | null>(null);
-  const nextRequestId = useRef(1);
+  const [request, setRequest] = useState<ChatRequest | null>(() =>
+    initialMessage ? { id: 1, message: initialMessage } : null,
+  );
+  const nextRequestId = useRef(2);
 
   const openChat = useCallback((options: OpenChatOptions = {}) => {
     setIsOpen(true);
