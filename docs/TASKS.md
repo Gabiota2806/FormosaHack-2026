@@ -262,7 +262,7 @@
   * **Escenario 4:** *Dado un usuario autenticado en la plataforma, cuando presiona el icono de historial (History de Lucide React) en la cabecera del Asistente Virtual, entonces se despliega la lista paginada de sus consultas pasadas con fecha/hora formateada, insignia de riesgo (🟢 Verde, 🟡 Amarillo, 🔴 Rojo) y entidad detectada; y al pulsar sobre una consulta, se restaura la conversación completa y la tarjeta de diagnóstico en pantalla.*
   * **Escenario 5:** *Dado que un usuario decide borrar un análisis de su historial, cuando confirma la acción en el diálogo accesible de confirmación (ConfirmModal), entonces el backend aplica borrado lógico (deleted_at = now()), la entrada desaparece inmediatamente de la lista y no se devuelve en consultas futuras.*
 * **Subtareas Técnicas Anidadas:**
-  * ⏳ **`FH26-85`** — `[TASK-045]` `[Maxi]` Modelo SQLAlchemy de Sesiones e Historial de Chat con Soft Delete, Repositorio y Esquemas Pydantic v2 (3 SP) — `Por hacer`
+  * ✅ **`FH26-85`** — `[TASK-045]` `[Maxi]` Modelo SQLAlchemy de Sesiones e Historial de Chat con Soft Delete, Repositorio y Esquemas Pydantic v2 (3 SP) — `Listo`
   * ⏳ **`FH26-86`** — `[TASK-046]` `[Maxi]` Servicio y Endpoints de Historial Protegidos por JWT, Auto-Claim y Persistencia en Core Service (5 SP) — `Por hacer`
   * ⏳ **`FH26-87`** — `[TASK-047]` `[Gabriel]` Contexto Global de Autenticación (AuthContext), Gestión de Token JWT y Enlace con API (3 SP) — `Por hacer`
   * ⏳ **`FH26-88`** — `[TASK-048]` `[Gabriel]` Componentes de Encabezado: Botón de Acceso Dinámico, Modal de Autenticación (AuthModal) y Dropdown de Usuario (UserDropdown) (5 SP) — `Por hacer`
