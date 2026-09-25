@@ -1,13 +1,34 @@
 import re
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from urllib.parse import quote
 from app.schemas.chat import ChatMessageResponse, HighlightedPhrase
+from app.services.gemini_service import GeminiService
 
 class ChatService:
     """
-    Motor heurístico de análisis de engaños y manipulación psicológica
-    para CiberGuardián con semáforo de 3 niveles y sugerencia de contención familiar.
+    Motor híbrido de análisis de engaños y manipulación psicológica
+    para CiberGuardián con inferencia IA (Gemini) y fallback heurístico resiliente.
     """
+
+    def __init__(self, gemini_service: Optional[GeminiService] = None):
+        self.gemini_service = gemini_service or GeminiService()
+
+    async def analyze_message_with_fallback(self, message: str) -> ChatMessageResponse:
+        """
+        Orquesta el análisis inteligente de un mensaje: intenta inferencia con Gemini
+        bajo timeout estricto de 2.5s. Si Gemini falla (timeout, 429, red, sin API key),
+        degrada suavemente hacia analyze_message (heurística regex).
+        """
+        try:
+            if self.gemini_service and self.gemini_service.is_available:
+                gemini_res = await self.gemini_service.analyze(message)
+                if gemini_res is not None:
+                    return gemini_res
+        except Exception:
+            pass
+
+        return self.analyze_message(message)
+
 
     ENTITIES_PATTERNS = {
         "Banco Formosa": [r"banco\s*formosa", r"formosa\s*banco", r"onda\s*siempre\s*pod", r"chig[uü]e"],
