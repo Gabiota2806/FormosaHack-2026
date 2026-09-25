@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Toaster, toast } from 'sonner';
 import { 
+  House,
   ShieldCheck, 
   MessageSquare, 
   Radio, 
@@ -13,6 +14,9 @@ import { api } from './services/api';
 import { ChatAssistant } from './components/chat/ChatAssistant';
 import { ThreatRadar } from './components/radar/ThreatRadar';
 import { SosModal } from './components/sos/SosModal';
+import { LandingPage } from './components/landing/LandingPage';
+import type { LandingAction } from './components/landing/types';
+import type { EntryMode } from './components/chat/types';
 import { ProtectorModeToggle } from './components/protector/ProtectorModeToggle';
 import { clearShareParams, readSharedMessage } from './pwa/shareTarget';
 import { Button } from './components/ui/Button';
@@ -22,21 +26,52 @@ import { IconBadge } from './components/ui/IconBadge';
 const AUTH_INPUT_CLASSES =
   'w-full px-3 py-2 bg-slate-950/70 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/20 transition';
 
-type Tab = 'chat' | 'radar' | 'auth';
+type Tab = 'home' | 'chat' | 'radar' | 'auth';
 
 const NAV_ITEMS: { id: Tab; label: string; icon: typeof MessageSquare }[] = [
+  { id: 'home', label: 'Inicio', icon: House },
   { id: 'chat', label: 'Asistente', icon: MessageSquare },
   { id: 'radar', label: 'Radar Comunitario', icon: Radio },
   { id: 'auth', label: '2FA & Auth', icon: Lock },
 ];
 
 export function App() {
-  const [activeTab, setActiveTab] = useState<Tab>('chat');
-  const [sosModalOpen, setSosModalOpen] = useState(false);
   // Mensaje compartido desde WhatsApp u otra app (Web Share Target, ver manifest.webmanifest).
   const [sharedMessage, setSharedMessage] = useState(() => readSharedMessage(window.location.search));
-  // Una vez que el chat lo empezó a analizar se descarta: si no, se repetiría al volver a la pestaña.
+  // La landing es la portada; si llega un mensaje compartido se abre directo el chat para analizarlo.
+  const [activeTab, setActiveTab] = useState<Tab>(() => (sharedMessage ? 'chat' : 'home'));
+  const [sosModalOpen, setSosModalOpen] = useState(false);
+  // Momento con el que se abre el chat desde la landing ("antes" o "durante").
+  const [chatEntry, setChatEntry] = useState<EntryMode | null>(null);
+  // Una vez que el chat los toma se descartan: si no, se repetirían al volver a la pestaña.
   const handleSharedMessageHandled = useCallback(() => setSharedMessage(null), []);
+  const handleChatEntryHandled = useCallback(() => setChatEntry(null), []);
+  const openSos = useCallback(() => setSosModalOpen(true), []);
+
+  const navigate = (tab: Tab) => {
+    setActiveTab(tab);
+    // La landing es larga: al cambiar de sección se arranca desde arriba.
+    window.scrollTo({ top: 0 });
+  };
+
+  const handleLandingAction = (action: LandingAction) => {
+    switch (action) {
+      case 'ANALYZE':
+        setChatEntry('PREVENCION');
+        navigate('chat');
+        break;
+      case 'DURING_CALL':
+        setChatEntry('DURANTE');
+        navigate('chat');
+        break;
+      case 'SOS':
+        openSos();
+        break;
+      case 'RADAR':
+        navigate('radar');
+        break;
+    }
+  };
 
   useEffect(() => {
     if (!sharedMessage) return;
@@ -118,22 +153,29 @@ export function App() {
       {/* Header de Navegación */}
       <header className="border-b border-slate-800 bg-slate-900/85 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 shrink-0 rounded-xl bg-gradient-to-br from-sky-500 to-brand-400 flex items-center justify-center text-white shadow-lg shadow-brand-500/20">
-              <ShieldCheck className="w-5 h-5" />
+          <button
+            type="button"
+            onClick={() => navigate('home')}
+            aria-label="CiberGuardián: ir al inicio"
+            title="Ir al inicio"
+            className="group flex items-center gap-2.5 min-w-0 rounded-xl -m-1 p-1 focus-visible:outline-2 focus-visible:outline-brand-400"
+          >
+            <div className="w-9 h-9 shrink-0 rounded-xl bg-gradient-to-br from-sky-500 to-brand-400 flex items-center justify-center text-white shadow-lg shadow-brand-500/20 transition-transform group-hover:scale-105">
+              <ShieldCheck className="w-5 h-5" aria-hidden="true" />
             </div>
             <span className="font-extrabold text-base sm:text-lg tracking-tight uppercase truncate">
               <span className="text-white">Ciber</span>
-              <span className="text-brand-400">Guardián</span>
+              <span className="text-brand-400 transition-colors group-hover:text-brand-300">Guardián</span>
             </span>
-          </div>
+          </button>
 
           {/* Selector de Vistas y Botón de Pánico */}
           <nav className="flex items-center gap-1 sm:gap-2" aria-label="Secciones">
             {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
-                onClick={() => setActiveTab(id)}
+                type="button"
+                onClick={() => navigate(id)}
                 aria-current={activeTab === id ? 'page' : undefined}
                 aria-label={label}
                 title={label}
@@ -143,7 +185,7 @@ export function App() {
                     : 'text-slate-300 hover:text-white after:bg-transparent'
                 }`}
               >
-                <Icon className="w-4 h-4 shrink-0" />
+                <Icon className="w-4 h-4 shrink-0" aria-hidden="true" />
                 <span className="hidden md:inline">{label}</span>
               </button>
             ))}
@@ -152,7 +194,7 @@ export function App() {
 
             <button
               type="button"
-              onClick={() => setSosModalOpen(true)}
+              onClick={openSos}
               aria-haspopup="dialog"
               aria-expanded={sosModalOpen}
               aria-label="SOS: abrir protocolo de emergencia y llamadas a bancos"
@@ -167,13 +209,17 @@ export function App() {
 
       {/* Contenido Principal */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {activeTab === 'home' && <LandingPage onAction={handleLandingAction} />}
+
         {activeTab === 'chat' && (
           <ChatAssistant
             sharedMessage={sharedMessage?.text}
             onSharedMessageHandled={handleSharedMessageHandled}
-            onOpenSos={() => setSosModalOpen(true)}
+            initialEntry={chatEntry ?? undefined}
+            onInitialEntryHandled={handleChatEntryHandled}
+            onOpenSos={openSos}
             onReportIncident={() => {
-              setActiveTab('radar');
+              navigate('radar');
               toast.info('Navegando al Radar para visualizar las amenazas reportadas.');
             }}
           />

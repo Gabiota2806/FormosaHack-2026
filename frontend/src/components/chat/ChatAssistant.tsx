@@ -30,6 +30,10 @@ interface ChatAssistantProps {
   sharedMessage?: string;
   /** Se llama al empezar a analizar sharedMessage, para que el padre lo descarte y no se repita. */
   onSharedMessageHandled?: () => void;
+  /** Momento con el que arranca el chat (p. ej. desde la landing). Si hay sharedMessage, gana ese. */
+  initialEntry?: EntryMode;
+  /** Se llama al tomar initialEntry, para que el padre lo descarte y no se repita al volver al chat. */
+  onInitialEntryHandled?: () => void;
 }
 
 // Límites del backend (ChatMessageRequest.message)
@@ -52,19 +56,25 @@ export function ChatAssistant({
   onOpenSos,
   sharedMessage,
   onSharedMessageHandled,
+  initialEntry,
+  onInitialEntryHandled,
 }: ChatAssistantProps) {
   const shared = sharedMessage?.trim();
   const sharedText = shared && shared.length >= MIN_LENGTH ? shared : undefined;
+  // Se fija al montar: que el padre descarte la prop después no cambia cómo arrancó este chat.
+  const [entryAtMount] = useState(() => (sharedText ? undefined : initialEntry));
+  const firstUserText = sharedText ?? (entryAtMount && ENTRY_OPTIONS.find((o) => o.mode === entryAtMount)!.userText);
 
-  // Con un mensaje compartido, el chat arranca mostrándolo y "escribiendo" la respuesta.
+  // Con un mensaje compartido o un momento de entrada, el chat arranca mostrándolo y "escribiendo" la respuesta.
   const [messages, setMessages] = useState<ChatMessage[]>(() =>
-    sharedText ? [WELCOME_MESSAGE, { id: 1, role: 'user', text: sharedText } as ChatMessage] : [WELCOME_MESSAGE],
+    firstUserText ? [WELCOME_MESSAGE, { id: 1, role: 'user', text: firstUserText }] : [WELCOME_MESSAGE],
   );
   const [inputText, setInputText] = useState('');
-  const [isTyping, setIsTyping] = useState(Boolean(sharedText));
+  const [isTyping, setIsTyping] = useState(Boolean(firstUserText));
 
-  const nextId = useRef(sharedText ? 2 : 1);
+  const nextId = useRef(firstUserText ? 2 : 1);
   const sharedAnalysisStarted = useRef(false);
+  const entryReplied = useRef(false);
   const pendingTimers = useRef<number[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -120,27 +130,48 @@ export function ChatAssistant({
     pendingTimers.current.push(timer);
   };
 
+  const entryReplies = useCallback(
+    (mode: EntryMode): { replies: NewChatMessage[]; onDone?: () => void } => {
+      switch (mode) {
+        case 'PREVENCION':
+          return {
+            replies: [{ role: 'bot', kind: 'text', text: PREVENTION_TEXT, quickReplies: EXAMPLE_MESSAGES }],
+            onDone: () => inputRef.current?.focus(),
+          };
+        case 'DURANTE':
+          return {
+            replies: [
+              { role: 'bot', kind: 'contention' },
+              { role: 'bot', kind: 'text', text: AFTER_CONTENTION_TEXT },
+            ],
+          };
+        case 'SOS':
+          return { replies: [{ role: 'bot', kind: 'text', text: SOS_TEXT }], onDone: onOpenSos };
+      }
+    },
+    [onOpenSos],
+  );
+
+  // Respuesta al momento de entrada. El temporizador se limpia y se reprograma si el efecto se
+  // repite (StrictMode), y entryReplied evita responder dos veces una vez que ya salió.
+  useEffect(() => {
+    if (!entryAtMount || entryReplied.current) return;
+    onInitialEntryHandled?.();
+    const { replies, onDone } = entryReplies(entryAtMount);
+    const timer = window.setTimeout(() => {
+      entryReplied.current = true;
+      setIsTyping(false);
+      pushMessages(...replies);
+      onDone?.();
+    }, SCRIPTED_REPLY_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [entryAtMount, entryReplies, onInitialEntryHandled, pushMessages]);
+
   const handleEntry = (mode: EntryMode) => {
     const option = ENTRY_OPTIONS.find((o) => o.mode === mode)!;
     pushMessages({ role: 'user', text: option.userText });
-
-    switch (mode) {
-      case 'PREVENCION':
-        replyAfterDelay(
-          [{ role: 'bot', kind: 'text', text: PREVENTION_TEXT, quickReplies: EXAMPLE_MESSAGES }],
-          () => inputRef.current?.focus(),
-        );
-        break;
-      case 'DURANTE':
-        replyAfterDelay([
-          { role: 'bot', kind: 'contention' },
-          { role: 'bot', kind: 'text', text: AFTER_CONTENTION_TEXT },
-        ]);
-        break;
-      case 'SOS':
-        replyAfterDelay([{ role: 'bot', kind: 'text', text: SOS_TEXT }], onOpenSos);
-        break;
-    }
+    const { replies, onDone } = entryReplies(mode);
+    replyAfterDelay(replies, onDone);
   };
 
   const handleAnalyze = async (rawText: string) => {
