@@ -18,6 +18,7 @@ import { LandingPage } from './components/landing/LandingPage';
 import type { LandingAction } from './components/landing/types';
 import type { EntryMode } from './components/chat/types';
 import { ElderlyModeToggle } from './components/elderly/ElderlyModeToggle';
+import { ElderlyHomeView } from './components/elderly/ElderlyHomeView';
 import { useElderlyMode } from './components/elderly/elderlyMode';
 import { clearShareParams, readSharedMessage } from './pwa/shareTarget';
 import { Button } from './components/ui/Button';
@@ -50,9 +51,9 @@ export function App() {
   const openSos = useCallback(() => setSosModalOpen(true), []);
 
   const { enabled: elderlyMode } = useElderlyMode();
-  // Modo Abuelo: sin la pestaña técnica de 2FA y, en celular, sin "Inicio" (el logo ya lleva ahí),
-  // para que con la letra de 22px el SOS entre en el header.
-  const navItems = elderlyMode ? NAV_ITEMS.filter(({ id }) => id !== 'auth') : NAV_ITEMS;
+  // Modo Abuelo: sin la pestaña técnica de 2FA ni el Radar; el inicio pasa a ser la vista de 3 botones.
+  // En celular tampoco va "Inicio" (el logo ya lleva ahí): con la letra de 22px no entra junto al logo.
+  const navItems = elderlyMode ? NAV_ITEMS.filter(({ id }) => id !== 'auth' && id !== 'radar') : NAV_ITEMS;
 
   const navigate = (tab: Tab) => {
     setActiveTab(tab);
@@ -217,7 +218,12 @@ export function App() {
 
       {/* Contenido Principal */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'home' && <LandingPage onAction={handleLandingAction} />}
+        {activeTab === 'home' &&
+          (elderlyMode ? (
+            <ElderlyHomeView onAction={handleLandingAction} />
+          ) : (
+            <LandingPage onAction={handleLandingAction} />
+          ))}
 
         {activeTab === 'chat' && (
           <ChatAssistant
