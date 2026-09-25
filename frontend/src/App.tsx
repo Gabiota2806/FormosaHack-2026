@@ -18,6 +18,7 @@ import { ElderlyModeToggle } from './components/elderly/ElderlyModeToggle';
 import { ElderlyHomeView } from './components/elderly/ElderlyHomeView';
 import { useElderlyMode } from './components/elderly/elderlyMode';
 import { clearShareParams, readSharedMessage } from './pwa/shareTarget';
+import { clearDeepLink, parseRadarDeepLink } from './pwa/deepLink';
 import { Button } from './components/ui/Button';
 import { Card } from './components/ui/Card';
 import { IconBadge } from './components/ui/IconBadge';
@@ -51,7 +52,10 @@ export function App() {
 }
 
 function AppShell({ sharedMessage }: { sharedMessage: SharedMessage | null }) {
-  const [activeTab, setActiveTab] = useState<Tab>('home');
+  // Enlace profundo de una notificación push ("/#radar?incident_id=15"): abre el Radar destacándola.
+  const [initialLink] = useState(() => parseRadarDeepLink(window.location.hash));
+  const [activeTab, setActiveTab] = useState<Tab>(() => (initialLink ? 'radar' : 'home'));
+  const [radarHighlight, setRadarHighlight] = useState<number | null>(() => initialLink?.incidentId ?? null);
   const [sosModalOpen, setSosModalOpen] = useState(false);
   const openSos = useCallback(() => setSosModalOpen(true), []);
   const { openChat, closeChat } = useChatWidget();
@@ -63,9 +67,29 @@ function AppShell({ sharedMessage }: { sharedMessage: SharedMessage | null }) {
 
   const navigate = (tab: Tab) => {
     setActiveTab(tab);
+    setRadarHighlight(null);
     // La landing es larga: al cambiar de sección se arranca desde arriba.
     window.scrollTo({ top: 0 });
   };
+
+  // El hash ya procesado se saca de la URL: así la misma alerta vuelve a funcionar si llega de nuevo.
+  useEffect(() => {
+    if (initialLink) clearDeepLink();
+  }, [initialLink]);
+
+  // Notificación tocada con la app ya abierta: el service worker solo cambia el hash.
+  useEffect(() => {
+    const onHashChange = () => {
+      const link = parseRadarDeepLink(window.location.hash);
+      if (!link) return;
+      clearDeepLink();
+      setActiveTab('radar');
+      setRadarHighlight(link.incidentId);
+      window.scrollTo({ top: 0 });
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
 
   const handleLandingAction = (action: LandingAction) => {
     switch (action) {
@@ -230,7 +254,7 @@ function AppShell({ sharedMessage }: { sharedMessage: SharedMessage | null }) {
             <LandingPage onAction={handleLandingAction} />
           ))}
 
-        {activeTab === 'radar' && <ThreatRadar />}
+        {activeTab === 'radar' && <ThreatRadar highlightId={radarHighlight} />}
 
         {activeTab === 'auth' && (
           <div className="max-w-2xl mx-auto space-y-8">

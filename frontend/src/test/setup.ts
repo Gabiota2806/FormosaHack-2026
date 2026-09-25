@@ -7,3 +7,4 @@ afterEach(cleanup);
 // jsdom no implementa el scroll de elementos ni de la ventana.
 Element.prototype.scrollTo = () => {};
 window.scrollTo = () => {};
+Element.prototype.scrollIntoView = () => {};

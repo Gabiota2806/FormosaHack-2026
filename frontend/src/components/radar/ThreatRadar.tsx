@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   Radio,
   Flame,
@@ -28,7 +28,12 @@ const FIELD_CLASSES =
 const PAGE_SIZE = 6;
 const SEARCH_DEBOUNCE_MS = 400;
 
-export function ThreatRadar() {
+interface ThreatRadarProps {
+  /** Amenaza a destacar al llegar desde una notificación push (FH26-75). */
+  highlightId?: number | null;
+}
+
+export function ThreatRadar({ highlightId = null }: ThreatRadarProps) {
   const [page, setPage] = useState(1);
   const [entityFilter, setEntityFilter] = useState('');
   const [vectorFilter, setVectorFilter] = useState('');
@@ -37,6 +42,9 @@ export function ThreatRadar() {
   const [votedIds, setVotedIds] = useState<Set<number>>(loadVotedIds);
   const [votingIds, setVotingIds] = useState<Set<number>>(() => new Set());
 
+  // Al cargar, lleva la vista y el foco a la amenaza de la notificación (una vez por id).
+  const scrolledToId = useRef<number | null>(null);
+
   const { data, status, reload, updateItem } = useIncidents({
     page,
     limit: PAGE_SIZE,
@@ -44,6 +52,20 @@ export function ThreatRadar() {
     vector: vectorFilter,
     search,
   });
+
+  useEffect(() => {
+    if (highlightId === null || status !== 'success' || !data || scrolledToId.current === highlightId) return;
+    scrolledToId.current = highlightId;
+    const card = document.getElementById(`incident-${highlightId}`);
+    if (card) {
+      card.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      card.focus({ preventScroll: true });
+    } else {
+      toast.info('La alerta que recibiste no está en esta página del Radar. Buscala con los filtros.', {
+        id: 'radar-highlight-missing',
+      });
+    }
+  }, [highlightId, status, data]);
 
   // Búsqueda mientras se escribe, con debounce.
   useEffect(() => {
@@ -274,6 +296,7 @@ export function ThreatRadar() {
               voted={votedIds.has(item.id)}
               voting={votingIds.has(item.id)}
               onVote={handleVote}
+              highlighted={item.id === highlightId}
             />
           ))}
         </div>
