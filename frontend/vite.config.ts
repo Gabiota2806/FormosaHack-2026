@@ -9,5 +9,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    // Los tests de flujo tipean con user-event sobre la app entera: aislados tardan 1-3 s, pero
+    // con la suite completa en paralelo rozaban el límite por defecto de 5 s.
+    testTimeout: 15000,
   },
 })

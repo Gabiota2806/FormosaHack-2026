@@ -1,4 +1,5 @@
 import { createContext, useContext } from 'react';
+import type { ChatAnalysisResponse } from '../../types';
 import type { EntryMode } from '../chat/types';
 
 /**
@@ -9,6 +10,13 @@ export interface ChatRequest {
   id: number;
   entry?: EntryMode;
   message?: string;
+  /** Volver a mostrar una consulta del historial (FH26-89). */
+  restore?: RestoredConsultation;
+}
+
+export interface RestoredConsultation {
+  analysis: ChatAnalysisResponse;
+  sourceText: string;
 }
 
 export interface OpenChatOptions {
@@ -16,6 +24,8 @@ export interface OpenChatOptions {
   entry?: EntryMode;
   /** Analiza este mensaje apenas se abre (p. ej. compartido desde WhatsApp). */
   message?: string;
+  /** Muestra una consulta del historial, lista para seguir preguntando sobre ella. */
+  restore?: RestoredConsultation;
 }
 
 export interface ChatWidgetContextValue {

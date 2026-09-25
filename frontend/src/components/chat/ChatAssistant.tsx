@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { MessageCircleQuestion, RotateCcw, ScanSearch, Send, ShieldAlert } from 'lucide-react';
+import { History, MessageCircleQuestion, RotateCcw, ScanSearch, Send, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { chatApi } from '../../services/api';
 import type { ChatAnalysisResponse, ChatFollowupTurn } from '../../types';
@@ -28,6 +28,7 @@ import {
   WELCOME_TEXT,
 } from './scripts';
 import type { ChatMessage, EntryMode, NewChatMessage, QuickReply } from './types';
+import { markSessionUsed } from './historyPreference';
 import { buildFamilyShareText, buildWhatsAppUrl } from './whatsappShare';
 
 interface ChatAssistantProps {
@@ -40,10 +41,25 @@ interface ChatAssistantProps {
    * Modo Abuelo) o analizar un mensaje (compartido desde WhatsApp).
    * Se ejecuta una sola vez por id y se confirma con onRequestHandled.
    */
-  request?: { id: number; entry?: EntryMode; message?: string } | null;
+  request?: {
+    id: number;
+    entry?: EntryMode;
+    message?: string;
+    /** Consulta del historial para volver a mostrar (FH26-89). */
+    restore?: { analysis: ChatAnalysisResponse; sourceText: string };
+  } | null;
   onRequestHandled?: (id: number) => void;
   /** Avisa si hay conversación o un borrador escrito (indicador del botón flotante). */
   onActivityChange?: (active: boolean) => void;
+  /**
+   * Clave del historial anónimo (FH26-89): si se pasa, cada análisis se guarda en esa sesión
+   * para poder vincularlo a la cuenta al iniciar sesión. Sin ella, no se envía.
+   */
+  anonymousSessionKey?: string;
+  /** Texto del encabezado sobre qué se guarda (privacidad); reemplaza al texto por defecto. */
+  headerNote?: ReactNode;
+  /** Abre "Mis consultas": el botón de historial solo aparece si se pasa (sesión iniciada). */
+  onOpenHistory?: () => void;
 }
 
 // Límites del backend (ChatMessageRequest.message)
@@ -88,6 +104,9 @@ export function ChatAssistant({
   request,
   onRequestHandled,
   onActivityChange,
+  anonymousSessionKey,
+  headerNote,
+  onOpenHistory,
 }: ChatAssistantProps) {
   // En Modo Abuelo el análisis se muestra como un veredicto simple, sin porcentajes ni jerga, y en
   // celular se esconde lo accesorio del chat: con la letra de 22px, la conversación quedaba en una franja.
@@ -137,18 +156,29 @@ export function ChatAssistant({
     ]);
   }, []);
 
+  /** Muestra un diagnóstico (recién hecho o del historial) y deja el chat listo para preguntar sobre él. */
+  const showAnalysis = useCallback(
+    (analysis: ChatAnalysisResponse, sourceText: string) => {
+      const analysisMessageId = nextId.current;
+      pushMessages(
+        { role: 'bot', kind: 'analysis', analysis, sourceText },
+        { role: 'bot', kind: 'text', text: FOLLOWUP_INTRO_TEXT, quickReplies: FOLLOWUP_STARTER_QUESTIONS },
+      );
+      setFollowup({ analysis, sourceText, analysisMessageId, sessionKey: newSessionKey(), history: [] });
+      setMode('followup');
+    },
+    [pushMessages],
+  );
+
   const requestAnalysis = useCallback(
     async (text: string) => {
       setIsTyping(true);
       try {
-        const analysis = await chatApi.analyzeMessage(text);
-        const analysisMessageId = nextId.current;
-        pushMessages(
-          { role: 'bot', kind: 'analysis', analysis, sourceText: text },
-          { role: 'bot', kind: 'text', text: FOLLOWUP_INTRO_TEXT, quickReplies: FOLLOWUP_STARTER_QUESTIONS },
-        );
-        setFollowup({ analysis, sourceText: text, analysisMessageId, sessionKey: newSessionKey(), history: [] });
-        setMode('followup');
+        const analysis = anonymousSessionKey
+          ? await chatApi.analyzeMessage(text, anonymousSessionKey)
+          : await chatApi.analyzeMessage(text);
+        if (anonymousSessionKey) markSessionUsed();
+        showAnalysis(analysis, text);
       } catch {
         // El interceptor de api.ts ya mostró el toast; el chat deja una guía mínima.
         pushMessages({ role: 'bot', kind: 'text', text: ANALYSIS_ERROR_TEXT });
@@ -156,7 +186,7 @@ export function ChatAssistant({
         setIsTyping(false);
       }
     },
-    [pushMessages],
+    [pushMessages, anonymousSessionKey, showAnalysis],
   );
 
   const replyAfterDelay = useCallback(
@@ -299,6 +329,14 @@ export function ChatAssistant({
     handledRequestId.current = request.id;
     onRequestHandled?.(request.id);
 
+    if (request.restore) {
+      pushMessages({ role: 'user', text: request.restore.sourceText });
+      // Mismo caso: el efecto procesa un pedido externo (restaurar del historial).
+      // oxlint-disable-next-line react/set-state-in-effect
+      showAnalysis(request.restore.analysis, request.restore.sourceText);
+      return;
+    }
+
     const message = request.message?.trim();
     if (message && message.length >= MIN_LENGTH) {
       pushMessages({ role: 'user', text: message });
@@ -308,7 +346,7 @@ export function ChatAssistant({
     } else if (request.entry) {
       handleEntry(request.entry);
     }
-  }, [request, onRequestHandled, pushMessages, requestAnalysis, handleEntry]);
+  }, [request, onRequestHandled, pushMessages, requestAnalysis, handleEntry, showAnalysis]);
 
   const handleQuickReply = (reply: QuickReply) => {
     if (reply.type === 'entry') handleEntry(reply.mode);
@@ -434,11 +472,26 @@ export function ChatAssistant({
         <div>
           <h2 className="font-bold text-white leading-tight">Asistente CiberGuardián</h2>
           <p className={cn('text-xs text-slate-400 flex items-center gap-1.5', elderlyMode && 'max-sm:hidden')}>
-            <span className="w-1.5 h-1.5 rounded-full bg-brand-400" aria-hidden="true" />
-            Sin registro · No guardamos tus mensajes
+            {headerNote ?? (
+              <>
+                <span className="w-1.5 h-1.5 rounded-full bg-brand-400" aria-hidden="true" />
+                Sin registro
+              </>
+            )}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-1">
+          {onOpenHistory && (
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={History}
+              onClick={onOpenHistory}
+              aria-label="Mis consultas"
+              title="Mis consultas"
+              className="h-9 w-9 px-0"
+            />
+          )}
           {hasStarted && (
             <Button variant="ghost" size="sm" icon={RotateCcw} onClick={handleReset}>
               <span className={cn(elderlyMode && 'max-sm:sr-only')}>Nueva consulta</span>

@@ -60,6 +60,8 @@ const HIGH_RISK: ChatAnalysisResponse = {
 
 const widgetPanel = () => screen.getByRole('dialog', { name: 'Asistente CiberGuardián', hidden: true });
 
+const ANON_KEY = expect.stringMatching(/^[0-9a-f]{32}$/);
+
 const SHARED = 'Banco Formosa: pasame el token urgente';
 
 describe('App: mensaje compartido (Web Share Target)', () => {
@@ -74,7 +76,8 @@ describe('App: mensaje compartido (Web Share Target)', () => {
     render(<App />, { wrapper: ElderlyModeProvider });
 
     expect(await screen.findByText('ALERTA ROJA: intento de estafa.')).toBeInTheDocument();
-    expect(analyzeMessage).toHaveBeenCalledExactlyOnceWith(SHARED);
+    // Sin sesión iniciada y sin desactivar el guardado, va la clave anónima del historial (FH26-89).
+    expect(analyzeMessage).toHaveBeenCalledExactlyOnceWith(SHARED, ANON_KEY);
     expect(window.location.search).toBe('');
   });
 
@@ -98,7 +101,7 @@ describe('App: mensaje compartido (Web Share Target)', () => {
     render(<App />, { wrapper: ElderlyModeProvider });
 
     expect(await screen.findByText('ALERTA ROJA: intento de estafa.')).toBeInTheDocument();
-    expect(analyzeMessage).toHaveBeenCalledWith(extensionUrl);
+    expect(analyzeMessage).toHaveBeenCalledWith(extensionUrl, ANON_KEY);
     expect(window.location.search).toBe('');
   });
 
@@ -111,7 +114,8 @@ describe('App: mensaje compartido (Web Share Target)', () => {
     );
 
     await screen.findByText('ALERTA ROJA: intento de estafa.');
-    expect(analyzeMessage).toHaveBeenCalledExactlyOnceWith(SHARED);
+    // Sin sesión iniciada y sin desactivar el guardado, va la clave anónima del historial (FH26-89).
+    expect(analyzeMessage).toHaveBeenCalledExactlyOnceWith(SHARED, ANON_KEY);
   });
 });
 

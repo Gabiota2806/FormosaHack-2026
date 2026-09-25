@@ -107,8 +107,16 @@ api.interceptors.response.use(
 
 // Funciones específicas del dominio CiberGuardián
 export const chatApi = {
-  analyzeMessage: async (message: string): Promise<ChatAnalysisResponse> => {
-    const res = await api.post<ChatAnalysisResponse>('/api/core/chat/message', { message });
+  /**
+   * Con sessionKey, el backend guarda la consulta en el historial anónimo de esa sesión
+   * (para vincularla a la cuenta al iniciar sesión). Sin ella, solo se guarda si hay sesión iniciada.
+   */
+  analyzeMessage: async (message: string, sessionKey?: string): Promise<ChatAnalysisResponse> => {
+    const res = await api.post<ChatAnalysisResponse>(
+      '/api/core/chat/message',
+      { message },
+      sessionKey ? { headers: { 'X-Session-Key': sessionKey } } : undefined,
+    );
     return res.data;
   },
   followUp: async (request: ChatFollowupRequest): Promise<ChatFollowupResponse> => {

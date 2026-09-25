@@ -8,6 +8,7 @@ import { CONTENTION, WELCOME_TEXT } from '../chat/scripts';
 import { ChatWidget } from './ChatWidget';
 import { CHAT_PANEL_ID } from './ChatWidgetPanel';
 import { ChatWidgetProvider } from './ChatWidgetProvider';
+import { AuthProvider } from '../../contexts/AuthContext';
 import { ElderlyModeProvider } from '../elderly/ElderlyModeContext';
 import { useChatWidget, type OpenChatOptions } from './chatWidgetContext';
 
@@ -23,9 +24,11 @@ const setDesktop = (desktop: boolean) => {
 // El chat lee el Modo Abuelo del contexto.
 function Providers({ children }: { children: ReactNode }) {
   return (
-    <ElderlyModeProvider>
-      <ChatWidgetProvider>{children}</ChatWidgetProvider>
-    </ElderlyModeProvider>
+    <AuthProvider>
+      <ElderlyModeProvider>
+        <ChatWidgetProvider>{children}</ChatWidgetProvider>
+      </ElderlyModeProvider>
+    </AuthProvider>
   );
 }
 
@@ -197,7 +200,7 @@ describe('ChatWidget: estado global y apertura programática (FH26-70)', () => {
     await user.click(screen.getByRole('button', { name: 'Minimizar asistente' }));
     await user.click(launcher());
 
-    expect(analyzeMessage).toHaveBeenCalledExactlyOnceWith('Banco Formosa: pasame el token');
+    expect(analyzeMessage).toHaveBeenCalledExactlyOnceWith('Banco Formosa: pasame el token', expect.any(String));
   });
 
   it('el mismo pedido hecho dos veces se ejecuta dos veces', async () => {
