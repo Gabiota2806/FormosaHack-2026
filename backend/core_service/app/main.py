@@ -5,7 +5,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from app.core.security import limiter
 from app.database import engine, Base
-from app.models import incident as incident_models, resource as resource_models, push as push_models
+from app.models import incident as incident_models, resource as resource_models, push as push_models, chat as chat_models
 from app.routers import resources, chat, incident, push
 
 Base.metadata.create_all(bind=engine)
