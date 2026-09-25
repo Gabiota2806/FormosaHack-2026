@@ -40,7 +40,13 @@ export function ChatLauncher({
       : 'Abrir asistente CiberGuardián';
 
   return (
-    <div className="fixed z-40 right-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] sm:right-6 sm:bottom-[calc(1.5rem+env(safe-area-inset-bottom))] flex flex-col items-end gap-3">
+    <div
+      className={cn(
+        'fixed z-40 right-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] sm:right-6 sm:bottom-[calc(1.5rem+env(safe-area-inset-bottom))] flex flex-col items-end gap-3',
+        // En el celular, con el panel abierto, la hoja tiene su propio control y el botón taparía el envío.
+        isOpen && 'max-sm:hidden',
+      )}
+    >
       {tooltip.visible && <ProactiveTooltip onOpen={handleToggle} onDismiss={tooltip.dismiss} />}
 
       <button
