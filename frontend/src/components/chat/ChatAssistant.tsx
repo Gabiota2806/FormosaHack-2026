@@ -39,6 +39,14 @@ interface ChatAssistantProps {
   variant?: 'page' | 'embedded';
   /** Controles extra en el encabezado del chat (p. ej. minimizar el panel del widget). */
   headerActions?: ReactNode;
+  /**
+   * Pedido para el chat ya montado (widget): arrancar un momento o analizar un mensaje.
+   * Se ejecuta una sola vez por id y se confirma con onRequestHandled.
+   */
+  request?: { id: number; entry?: EntryMode; message?: string } | null;
+  onRequestHandled?: (id: number) => void;
+  /** Avisa si hay conversación o un borrador escrito (indicador del botón flotante). */
+  onActivityChange?: (active: boolean) => void;
 }
 
 // Límites del backend (ChatMessageRequest.message)
@@ -65,6 +73,9 @@ export function ChatAssistant({
   onInitialEntryHandled,
   variant = 'page',
   headerActions,
+  request,
+  onRequestHandled,
+  onActivityChange,
 }: ChatAssistantProps) {
   const shared = sharedMessage?.trim();
   const sharedText = shared && shared.length >= MIN_LENGTH ? shared : undefined;
@@ -105,6 +116,7 @@ export function ChatAssistant({
 
   const requestAnalysis = useCallback(
     async (text: string) => {
+      setIsTyping(true);
       try {
         const analysis = await chatApi.analyzeMessage(text);
         pushMessages({ role: 'bot', kind: 'analysis', analysis, sourceText: text });
@@ -127,15 +139,18 @@ export function ChatAssistant({
     onSharedMessageHandled?.();
   }, [sharedText, requestAnalysis, onSharedMessageHandled]);
 
-  const replyAfterDelay = (replies: NewChatMessage[], onDone?: () => void) => {
-    setIsTyping(true);
-    const timer = window.setTimeout(() => {
-      setIsTyping(false);
-      pushMessages(...replies);
-      onDone?.();
-    }, SCRIPTED_REPLY_DELAY_MS);
-    pendingTimers.current.push(timer);
-  };
+  const replyAfterDelay = useCallback(
+    (replies: NewChatMessage[], onDone?: () => void) => {
+      setIsTyping(true);
+      const timer = window.setTimeout(() => {
+        setIsTyping(false);
+        pushMessages(...replies);
+        onDone?.();
+      }, SCRIPTED_REPLY_DELAY_MS);
+      pendingTimers.current.push(timer);
+    },
+    [pushMessages],
+  );
 
   const entryReplies = useCallback(
     (mode: EntryMode): { replies: NewChatMessage[]; onDone?: () => void } => {
@@ -174,12 +189,15 @@ export function ChatAssistant({
     return () => clearTimeout(timer);
   }, [entryAtMount, entryReplies, onInitialEntryHandled, pushMessages]);
 
-  const handleEntry = (mode: EntryMode) => {
-    const option = ENTRY_OPTIONS.find((o) => o.mode === mode)!;
-    pushMessages({ role: 'user', text: option.userText });
-    const { replies, onDone } = entryReplies(mode);
-    replyAfterDelay(replies, onDone);
-  };
+  const handleEntry = useCallback(
+    (mode: EntryMode) => {
+      const option = ENTRY_OPTIONS.find((o) => o.mode === mode)!;
+      pushMessages({ role: 'user', text: option.userText });
+      const { replies, onDone } = entryReplies(mode);
+      replyAfterDelay(replies, onDone);
+    },
+    [pushMessages, entryReplies, replyAfterDelay],
+  );
 
   const handleAnalyze = async (rawText: string) => {
     const text = rawText.trim();
@@ -190,9 +208,26 @@ export function ChatAssistant({
 
     pushMessages({ role: 'user', text });
     setInputText('');
-    setIsTyping(true);
     await requestAnalysis(text);
   };
+
+  // Pedidos del widget. No usa handleAnalyze: no debe borrar un borrador que la persona esté escribiendo.
+  const handledRequestId = useRef<number | null>(null);
+  useEffect(() => {
+    if (!request || handledRequestId.current === request.id) return;
+    handledRequestId.current = request.id;
+    onRequestHandled?.(request.id);
+
+    const message = request.message?.trim();
+    if (message && message.length >= MIN_LENGTH) {
+      pushMessages({ role: 'user', text: message });
+      // El efecto procesa un pedido externo (el widget): marcar "escribiendo" acá es la sincronización.
+      // oxlint-disable-next-line react/set-state-in-effect
+      requestAnalysis(message);
+    } else if (request.entry) {
+      handleEntry(request.entry);
+    }
+  }, [request, onRequestHandled, pushMessages, requestAnalysis, handleEntry]);
 
   const handleQuickReply = (reply: QuickReply) => {
     if (reply.type === 'entry') handleEntry(reply.mode);
@@ -230,6 +265,11 @@ export function ChatAssistant({
   };
 
   const hasStarted = messages.length > 1;
+  const isActive = hasStarted || inputText.trim().length > 0;
+
+  useEffect(() => {
+    onActivityChange?.(isActive);
+  }, [isActive, onActivityChange]);
 
   const renderMessage = (msg: ChatMessage) => {
     if (msg.role === 'user') {
