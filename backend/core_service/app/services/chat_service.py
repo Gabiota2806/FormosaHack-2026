@@ -1,33 +1,98 @@
 import re
 from typing import List, Tuple, Optional
 from urllib.parse import quote
+from sqlalchemy.orm import Session
 from app.schemas.chat import ChatMessageResponse, HighlightedPhrase
 from app.services.gemini_service import GeminiService
+from app.services.threat_intel_service import OUTBREAK_REASON, ThreatIntelService, ThreatMatch
 
 class ChatService:
     """
     Motor híbrido de análisis de engaños y manipulación psicológica
-    para CiberGuardián con inferencia IA (Gemini) y fallback heurístico resiliente.
+    para CiberGuardián con inferencia IA (Gemini) y fallback heurístico resiliente,
+    correlacionado con el Repositorio de Inteligencia de Amenazas (brotes >= 3 votos).
     """
 
-    def __init__(self, gemini_service: Optional[GeminiService] = None):
+    def __init__(
+        self,
+        gemini_service: Optional[GeminiService] = None,
+        threat_intel_service: Optional[ThreatIntelService] = None
+    ):
         self.gemini_service = gemini_service or GeminiService()
+        self.threat_intel_service = threat_intel_service or ThreatIntelService()
 
-    async def analyze_message_with_fallback(self, message: str) -> ChatMessageResponse:
+    async def analyze_message_with_fallback(
+        self, message: str, db: Optional[Session] = None
+    ) -> ChatMessageResponse:
         """
         Orquesta el análisis inteligente de un mensaje: intenta inferencia con Gemini
         bajo timeout estricto de 2.5s. Si Gemini falla (timeout, 429, red, sin API key),
-        degrada suavemente hacia analyze_message (heurística regex).
+        degrada suavemente hacia analyze_message (heurística regex). Luego correlaciona
+        el resultado con los brotes comunitarios activos (FH26-54, Escenario 3).
         """
+        response: Optional[ChatMessageResponse] = None
         try:
             if self.gemini_service and self.gemini_service.is_available:
-                gemini_res = await self.gemini_service.analyze(message)
-                if gemini_res is not None:
-                    return gemini_res
+                response = await self.gemini_service.analyze(message)
         except Exception:
-            pass
+            response = None
 
-        return self.analyze_message(message)
+        if response is None:
+            response = self.analyze_message(message)
+
+        return self._apply_community_outbreak(response, message, db)
+
+    def _apply_community_outbreak(
+        self, response: ChatMessageResponse, message: str, db: Optional[Session]
+    ) -> ChatMessageResponse:
+        """
+        Si el mensaje contiene un teléfono, dominio o CBU con >= 3 votos comunitarios
+        (y no oficial), eleva el riesgo al 100% (ALERTA ROJA). Ante cualquier falla
+        de la base de datos degrada en silencio sin romper el diagnóstico.
+        """
+        if db is None:
+            return response
+
+        try:
+            matches: List[ThreatMatch] = self.threat_intel_service.match_outbreak_indicators(db, message)
+        except Exception:
+            return response
+
+        if not matches:
+            return response
+
+        best = max(matches, key=lambda m: m.votes)
+        label = {"PHONE": "número de teléfono", "URL": "enlace", "CBU": "CBU"}.get(best.indicator_type, "contacto")
+        entity_hint = f" suplantando a {best.entity}" if best.entity else ""
+
+        response.risk_level = "HIGH"
+        response.risk_percentage = 100
+        response.summary = (
+            f"ALERTA ROJA: {OUTBREAK_REASON} "
+            f"El {label} detectado fue reportado {best.votes} veces{entity_hint}."
+        )
+        response.immediate_action = (
+            "¡FRENÁ INMEDIATAMENTE! Bloqueá y denunciá este contacto: la comunidad de Formosa "
+            "ya confirmó que se trata de una estafa activa."
+        )
+        response.what_not_to_do = (
+            "NUNCA respondas, no abras enlaces ni transfieras dinero a este contacto reportado como brote activo."
+        )
+        entity_wa = f" que suplanta a {best.entity}" if best.entity else ""
+        response.wa_share_text = (
+            f"Hola, recibí este mensaje{entity_wa} y antes de hacer nada lo analicé con CiberGuardián. "
+            f"Me marcó riesgo HIGH (100%): el contacto coincide con un brote de estafas reportado por la "
+            f"comunidad en Formosa. ¡No lo abras ni respondas, reenvialo para alertar a más vecinos!"
+        )
+
+        for match in matches:
+            response.highlighted_phrases.append(HighlightedPhrase(
+                phrase=match.value,
+                reason=OUTBREAK_REASON,
+                category="COMMUNITY_OUTBREAK"
+            ))
+
+        return response
 
 
     ENTITIES_PATTERNS = {
