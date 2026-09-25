@@ -230,7 +230,8 @@ describe('ChatWidget: estado global y apertura programática (FH26-70)', () => {
     await user.click(screen.getByRole('button', { name: 'Compartido' }));
     await screen.findByText('ALERTA ROJA: intento de estafa.');
 
-    expect(screen.getByLabelText('Mensaje sospechoso')).toHaveValue('mi borrador');
+    // El análisis pasa la caja al modo seguimiento, pero el borrador sigue ahí.
+    expect(screen.getByLabelText('Tu pregunta sobre el mensaje')).toHaveValue('mi borrador');
   });
 
   it('abrir sin pedido solo abre el panel', async () => {

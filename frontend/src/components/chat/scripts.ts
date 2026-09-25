@@ -1,4 +1,14 @@
-import { Gift, Landmark, MessageCircle, PhoneCall, ShieldCheck, Siren } from 'lucide-react';
+import {
+  Banknote,
+  FileText,
+  Gift,
+  Landmark,
+  MessageCircle,
+  MousePointerClick,
+  PhoneCall,
+  ShieldCheck,
+  Siren,
+} from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { EntryMode, QuickReply } from './types';
 
@@ -86,3 +96,17 @@ export const SOS_TEXT =
 
 export const ANALYSIS_ERROR_TEXT =
   'No pude analizar el mensaje en este momento. Mientras tanto: no abras enlaces, no compartas códigos y no transfieras plata. Probá de nuevo en unos segundos.';
+
+// --- Preguntas de seguimiento (FH26-57) ---
+
+export const FOLLOWUP_INTRO_TEXT =
+  '¿Te quedó alguna duda sobre este mensaje? Preguntame lo que quieras, por ejemplo:';
+
+export const FOLLOWUP_STARTER_QUESTIONS: QuickReply[] = [
+  { label: '¿Qué hago si ya hice clic en el enlace?', icon: MousePointerClick, type: 'ask', text: '¿Qué hago si ya hice clic en el enlace?' },
+  { label: '¿Y si ya les pasé datos o plata?', icon: Banknote, type: 'ask', text: '¿Qué hago si ya les pasé mis datos o les transferí plata?' },
+  { label: '¿Cómo lo denuncio?', icon: FileText, type: 'ask', text: '¿Cómo y dónde denuncio este intento de estafa?' },
+];
+
+export const FOLLOWUP_ERROR_TEXT =
+  'No pude responder tu pregunta en este momento. Si ya pasaste datos o plata, no esperes: tocá "¡Pasé mis datos o plata, auxilio!" para bloquear todo.';

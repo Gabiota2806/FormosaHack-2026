@@ -2,6 +2,8 @@ import axios, { AxiosError } from 'axios';
 import { toast } from 'sonner';
 import type { 
   ChatAnalysisResponse, 
+  ChatFollowupRequest,
+  ChatFollowupResponse,
   IncidentPaginationResponse, 
   IncidentItem,
   IncidentStats,
@@ -95,6 +97,10 @@ api.interceptors.response.use(
 export const chatApi = {
   analyzeMessage: async (message: string): Promise<ChatAnalysisResponse> => {
     const res = await api.post<ChatAnalysisResponse>('/api/core/chat/message', { message });
+    return res.data;
+  },
+  followUp: async (request: ChatFollowupRequest): Promise<ChatFollowupResponse> => {
+    const res = await api.post<ChatFollowupResponse>('/api/core/chat/followup', request);
     return res.data;
   },
 };
