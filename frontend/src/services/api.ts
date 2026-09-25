@@ -1,11 +1,5 @@
 import axios, { AxiosError } from 'axios';
 import { toast } from 'sonner';
-import type { 
-  ChatAnalysisResponse, 
-  IncidentPaginationResponse, 
-  IncidentItem,
-  OfficialChannel 
-} from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -42,11 +36,6 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError<{ detail?: string }>) => {
-    // Pedidos cancelados a propósito (AbortController): no son errores para el usuario.
-    if (axios.isCancel(error)) {
-      return Promise.reject(error);
-    }
-
     if (!error.response) {
       toast.error('No se pudo conectar con el servidor. Verifique su conexión de red.');
       return Promise.reject(error);
@@ -82,39 +71,3 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
-// Funciones específicas del dominio CiberGuardián
-export const chatApi = {
-  analyzeMessage: async (message: string): Promise<ChatAnalysisResponse> => {
-    const res = await api.post<ChatAnalysisResponse>('/api/core/chat/message', { message });
-    return res.data;
-  },
-};
-
-export const incidentApi = {
-  getIncidents: async (params?: {
-    page?: number;
-    limit?: number;
-    entity?: string;
-    vector?: string;
-    search?: string;
-  }, signal?: AbortSignal): Promise<IncidentPaginationResponse> => {
-    const res = await api.get<IncidentPaginationResponse>('/api/core/incidents', { params, signal });
-    return res.data;
-  },
-  voteIncident: async (incidentId: number, fingerprint: string) => {
-    const res = await api.post<{ success: boolean; votes_count: number; message: string }>(
-      `/api/core/incidents/${incidentId}/me-too`,
-      { user_fingerprint: fingerprint }
-    );
-    return res.data;
-  },
-  createIncident: async (data: Partial<IncidentItem>) => {
-    const res = await api.post<IncidentItem>('/api/core/incidents', data);
-    return res.data;
-  },
-  getVerifiedChannels: async (): Promise<OfficialChannel[]> => {
-    const res = await api.get<OfficialChannel[]>('/api/core/incidents/channels/verified');
-    return res.data;
-  },
-};
