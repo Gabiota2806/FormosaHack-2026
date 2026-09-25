@@ -1,8 +1,10 @@
-import { Calendar, Check, MessageCircle, ThumbsUp } from 'lucide-react';
+import { BellRing, Calendar, Check, MessageCircle, Share2, ThumbsUp } from 'lucide-react';
+import { buildWhatsAppUrl } from '../chat/whatsappShare';
 import type { IncidentItem } from '../../types';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { cn } from '../ui/cn';
+import { buildIncidentShareText } from './incidentShare';
 import { reportsLabel, vectorLabel } from './radarLabels';
 
 interface IncidentCardProps {
@@ -10,16 +12,33 @@ interface IncidentCardProps {
   voted: boolean;
   voting: boolean;
   onVote: (id: number) => void;
+  /** La amenaza llegó por una notificación push: se destaca (FH26-75). */
+  highlighted?: boolean;
 }
 
 const CHIP = 'text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full';
 
-export function IncidentCard({ item, voted, voting, onVote }: IncidentCardProps) {
+export function IncidentCard({ item, voted, voting, onVote, highlighted = false }: IncidentCardProps) {
   const titleId = `incident-${item.id}-title`;
 
+  const handleShare = () => {
+    window.open(buildWhatsAppUrl(buildIncidentShareText(item)), '_blank', 'noopener');
+  };
+
   return (
-    <Card className="flex flex-col animate-fade-up">
-      <article aria-labelledby={titleId} className="flex-1 flex flex-col">
+    <Card
+      className={cn(
+        'flex flex-col animate-fade-up',
+        highlighted && 'ring-4 ring-amber-300 ring-offset-2 ring-offset-slate-900',
+      )}
+    >
+      {/* id y tabIndex: la notificación push lleva el foco a esta tarjeta */}
+      <article
+        id={`incident-${item.id}`}
+        tabIndex={-1}
+        aria-labelledby={titleId}
+        className="flex-1 flex flex-col focus:outline-none"
+      >
         <div className={cn('h-1.5', item.is_outbreak_spike ? 'bg-red-500' : 'bg-brand-500')} aria-hidden="true" />
         <div className="p-5 flex-1 flex flex-col justify-between">
           <div>
@@ -44,6 +63,13 @@ export function IncidentCard({ item, voted, voting, onVote }: IncidentCardProps)
               </time>
             </div>
 
+            {highlighted && (
+              <p className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-900">
+                <BellRing className="h-3.5 w-3.5" aria-hidden="true" />
+                Esta es la alerta que recibiste
+              </p>
+            )}
+
             <h3 id={titleId} className="font-bold text-sm text-slate-900 mb-1.5">
               {item.title}
             </h3>
@@ -59,24 +85,36 @@ export function IncidentCard({ item, voted, voting, onVote }: IncidentCardProps)
             )}
           </div>
 
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+          <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs font-semibold text-slate-500">{reportsLabel(item.votes_count)}</span>
 
-            <Button
-              size="sm"
-              variant={voted ? 'secondary' : 'primary'}
-              icon={voted ? Check : ThumbsUp}
-              onClick={() => onVote(item.id)}
-              disabled={voted || voting}
-              aria-pressed={voted}
-              aria-label={
-                voted
-                  ? `Ya avisaste que te llegó: ${item.title}`
-                  : `A mí también me llegó: ${item.title}`
-              }
-            >
-              {voted ? 'Ya avisaste' : voting ? 'Enviando...' : 'A mí también me llegó'}
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="secondary"
+                icon={Share2}
+                onClick={handleShare}
+                aria-label={`Avisar a mi familia por WhatsApp: ${item.title}`}
+              >
+                Avisar a mi familia
+              </Button>
+
+              <Button
+                size="sm"
+                variant={voted ? 'secondary' : 'primary'}
+                icon={voted ? Check : ThumbsUp}
+                onClick={() => onVote(item.id)}
+                disabled={voted || voting}
+                aria-pressed={voted}
+                aria-label={
+                  voted
+                    ? `Ya avisaste que te llegó: ${item.title}`
+                    : `A mí también me llegó: ${item.title}`
+                }
+              >
+                {voted ? 'Ya avisaste' : voting ? 'Enviando...' : 'A mí también me llegó'}
+              </Button>
+            </div>
           </div>
         </div>
       </article>

@@ -207,4 +207,52 @@ describe('ThreatRadar', () => {
     await waitFor(() => expect(lastQuery()).toMatchObject({ entity: undefined, page: 1 }));
     expect(screen.getByLabelText('Filtrar por entidad')).toHaveValue('');
   });
+
+  describe('llegada desde una notificación push (FH26-75)', () => {
+    it('destaca la amenaza, la enfoca y la lleva a la vista', async () => {
+      const scrollIntoView = vi.spyOn(Element.prototype, 'scrollIntoView');
+      render(<ThreatRadar highlightId={2} />);
+
+      expect(await screen.findByText('Esta es la alerta que recibiste')).toBeInTheDocument();
+      const card = screen.getByRole('article', { name: 'Llamada falsa de ANSES' });
+      await waitFor(() => expect(card).toHaveFocus());
+      expect(scrollIntoView).toHaveBeenCalledWith({ block: 'center', behavior: 'smooth' });
+      expect(screen.getAllByText('Esta es la alerta que recibiste')).toHaveLength(1);
+      scrollIntoView.mockRestore();
+    });
+
+    it('avisa si la amenaza no está en la página actual', async () => {
+      render(<ThreatRadar highlightId={99} />);
+
+      await waitFor(() =>
+        expect(toast.info).toHaveBeenCalledWith(
+          'La alerta que recibiste no está en esta página del Radar. Buscala con los filtros.',
+          { id: 'radar-highlight-missing' },
+        ),
+      );
+      expect(screen.queryByText('Esta es la alerta que recibiste')).not.toBeInTheDocument();
+    });
+
+    it('sin notificación no destaca nada', async () => {
+      render(<ThreatRadar />);
+
+      await screen.findByText('Llamada falsa de ANSES');
+      expect(screen.queryByText('Esta es la alerta que recibiste')).not.toBeInTheDocument();
+    });
+  });
+
+  it('"Avisar a mi familia" abre WhatsApp con la estafa de la tarjeta', async () => {
+    const user = userEvent.setup();
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
+    render(<ThreatRadar />);
+
+    await user.click(await screen.findByRole('button', { name: 'Avisar a mi familia por WhatsApp: Llamada falsa de ANSES' }));
+
+    const [url, target] = open.mock.calls[0];
+    expect(target).toBe('_blank');
+    const text = decodeURIComponent(String(url).replace('https://wa.me/?text=', ''));
+    expect(text).toContain('*Llamada falsa de ANSES*');
+    expect(text).toContain('Se hacen pasar por: Banco Formosa');
+    open.mockRestore();
+  });
 });

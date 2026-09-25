@@ -248,3 +248,40 @@ describe('App: Modo Abuelo', () => {
     expect(await screen.findByText(PREVENTION_TEXT)).toBeInTheDocument();
   });
 });
+
+describe('App: enlace profundo de notificaciones push (FH26-75)', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    window.history.replaceState(null, '', '/');
+  });
+
+  const radarTab = () => screen.getByRole('button', { name: 'Radar Comunitario' });
+
+  it('al abrir con "#radar?incident_id=15" va al Radar y limpia el hash', async () => {
+    window.history.replaceState(null, '', '/#radar?incident_id=15');
+    render(<App />, { wrapper: ElderlyModeProvider });
+
+    expect(radarTab()).toHaveAttribute('aria-current', 'page');
+    await waitFor(() => expect(window.location.hash).toBe(''));
+  });
+
+  it('con la app abierta, la notificación (cambio de hash) lleva al Radar', async () => {
+    render(<App />, { wrapper: ElderlyModeProvider });
+    expect(screen.getByRole('button', { name: 'Inicio' })).toHaveAttribute('aria-current', 'page');
+
+    window.history.replaceState(null, '', '/#radar?incident_id=3');
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+
+    await waitFor(() => expect(radarTab()).toHaveAttribute('aria-current', 'page'));
+    expect(window.location.hash).toBe('');
+  });
+
+  it('ignora hashes que no son del Radar', async () => {
+    render(<App />, { wrapper: ElderlyModeProvider });
+
+    window.history.replaceState(null, '', '/#otra-cosa');
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+
+    expect(screen.getByRole('button', { name: 'Inicio' })).toHaveAttribute('aria-current', 'page');
+  });
+});
