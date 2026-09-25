@@ -22,12 +22,13 @@ export function ChatWidgetProvider({ children, initialMessage }: ChatWidgetProvi
 
   const openChat = useCallback((options: OpenChatOptions = {}) => {
     setIsOpen(true);
-    if (options.entry || options.message || options.restore) {
+    if (options.entry || options.message || options.restore || options.view) {
       setRequest({
         id: nextRequestId.current++,
         entry: options.entry,
         message: options.message,
         restore: options.restore,
+        view: options.view,
       });
     }
   }, []);
