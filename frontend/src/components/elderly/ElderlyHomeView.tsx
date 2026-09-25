@@ -1,7 +1,9 @@
 import { ChevronRight, MessageCircle, PhoneOff, Search, type LucideIcon } from 'lucide-react';
+import { useState } from 'react';
 import { buildWhatsAppUrl } from '../chat/whatsappShare';
 import { cn } from '../ui/cn';
 import type { LandingProps } from '../landing/types';
+import { ElderlyPanicScreen } from './ElderlyPanicScreen';
 
 /** Texto para pedir ayuda a un familiar; sin número, WhatsApp deja elegir el contacto. */
 export const FAMILY_HELP_TEXT =
@@ -31,6 +33,10 @@ function ActionContent({ icon: Icon, title, hint }: { icon: LucideIcon; title: s
  * que hace falta en el momento (revisar un mensaje, avisar a la familia, cortar una llamada).
  */
 export function ElderlyHomeView({ onAction }: LandingProps) {
+  const [panicOpen, setPanicOpen] = useState(false);
+
+  if (panicOpen) return <ElderlyPanicScreen onBack={() => setPanicOpen(false)} />;
+
   return (
     <section aria-labelledby="elderly-home-title" className="mx-auto max-w-2xl space-y-6 animate-fade-up">
       <div className="space-y-2">
@@ -68,7 +74,7 @@ export function ElderlyHomeView({ onAction }: LandingProps) {
 
         <button
           type="button"
-          onClick={() => onAction('DURING_CALL')}
+          onClick={() => setPanicOpen(true)}
           className={cn(ACTION_CLASSES, 'border-red-400 bg-red-600 text-white hover:bg-red-700 focus-visible:outline-red-300')}
         >
           <ActionContent
