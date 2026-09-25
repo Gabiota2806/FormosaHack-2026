@@ -33,7 +33,7 @@
 ## 👥 Historias de Usuario (BDD / Gherkin) y sus Subtareas Técnicas
 
 ### 🔹 FH26-13: [US-08] Seguridad perimetral, 2FA TOTP y arquitectura de microservicios
-* **Épica Padre:** `FH26-1` | **Story Points:** 8 SP | **Estado:** `En curso` ⏳
+* **Épica Padre:** `FH26-1` | **Story Points:** 8 SP | **Estado:** `Listo` ✅
 * **Enunciado Ágil:**  
   *Como oficial de seguridad o administrador de CiberGuardián, quiero contar con autenticación de dos factores (2FA TOTP), rate limiting perimetral y microservicios con soft delete, para proteger la plataforma contra ataques de fuerza bruta y pérdida de datos.*
 * **Criterios de Aceptación (Gherkin):**
@@ -45,7 +45,7 @@
   * ✅ **`FH26-36`** — `[TASK-003]` `[Gabriel]` Auth Service Base (JWT, Hashing bcrypt, RBAC) (3 SP) — `Listo`
   * ✅ **`FH26-37`** — `[TASK-004]` `[Gabriel]` Segundo Factor 2FA TOTP (Google Authenticator) (3 SP) — `Listo`
   * ✅ **`FH26-38`** — `[TASK-005]` `[Gabriel]` Rate Limiting (SlowAPI) y Security Headers (2 SP) — `Listo`
-  * ⏳ **`FH26-39`** — `[TASK-017]` `[Gabriel]` Pruebas Unitarias (pytest) y Documentación Swagger (3 SP) — `Por hacer`
+  * ✅ **`FH26-39`** — `[TASK-017]` `[Gabriel]` Pruebas Unitarias (pytest) y Documentación Swagger (3 SP) — `Listo`
 
 ---
 
@@ -139,7 +139,7 @@
 ## 🎯 Asignación Oficial de Trabajo por Duplas (Sprint 1)
 * **Dupla Backend (Gabriel Pineda + Maxi González):**
   * Maxi González: `FH26-45`, `FH26-47`, `FH26-48` (10 SP pendientes).
-  * Gabriel Pineda: `FH26-39` (3 SP pendientes) + Integración y Soporte de Infraestructura.
+  * Gabriel Pineda: `FH26-39` (3 SP - ✅ Completado) + Integración y Soporte de Infraestructura.
 * **Dupla Frontend (Matías + Valeria Budiño):**
   * Matías: `FH26-40`, `FH26-41`, `FH26-42` (10 SP pendientes).
   * Valeria Budiño: `FH26-43`, `FH26-44`, `FH26-49`, `FH26-50` (16 SP pendientes).
