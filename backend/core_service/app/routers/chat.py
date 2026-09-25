@@ -1,5 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Optional
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from sqlalchemy.orm import Session
+from app.core.security import get_optional_user
 from app.database import get_db
 from app.schemas.chat import (
     ChatMessageRequest,
@@ -8,11 +10,15 @@ from app.schemas.chat import (
     ChatFollowupResponse,
 )
 from app.services.chat_service import ChatService
+from app.services.chat_history_service import ChatHistoryService
 
 router = APIRouter(prefix="/chat", tags=["Chatbot CiberGuardián"])
 
 def get_chat_service() -> ChatService:
     return ChatService()
+
+def get_chat_history_service() -> ChatHistoryService:
+    return ChatHistoryService()
 
 @router.post(
     "/message",
@@ -24,15 +30,31 @@ def get_chat_service() -> ChatService:
 async def analyze_message(
     payload: ChatMessageRequest,
     db: Session = Depends(get_db),
-    service: ChatService = Depends(get_chat_service)
+    service: ChatService = Depends(get_chat_service),
+    history_service: ChatHistoryService = Depends(get_chat_history_service),
+    current_user: Optional[dict] = Depends(get_optional_user),
+    x_session_key: Optional[str] = Header(None, alias="X-Session-Key"),
 ):
     try:
-        return await service.analyze_message_with_fallback(payload.message, db=db)
+        diagnosis = await service.analyze_message_with_fallback(payload.message, db=db)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al analizar el mensaje: {str(e)}"
         )
+
+    effective_session_key = payload.session_key or x_session_key
+    user_id = current_user.get("user_id") if current_user else None
+    if effective_session_key or user_id:
+        history_service.save_analysis_message(
+            db=db,
+            diagnosis=diagnosis,
+            original_message=payload.message,
+            session_key=effective_session_key,
+            user_id=user_id,
+        )
+
+    return diagnosis
 
 @router.post(
     "/followup",

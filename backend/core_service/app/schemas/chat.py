@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 
 class ChatMessageRequest(BaseModel):
     message: str = Field(..., min_length=3, max_length=2000, description="Texto o transcripción del mensaje sospechoso recibido por el usuario.")
+    session_key: Optional[str] = Field(None, max_length=64, description="Clave de sesión de chat (anónima o autenticada) para persistencia automática en el historial.")
 
 class HighlightedPhrase(BaseModel):
     phrase: str = Field(..., description="Frase o fragmento textual identificado en el mensaje.")

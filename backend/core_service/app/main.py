@@ -5,8 +5,8 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from app.core.security import limiter
 from app.database import engine, Base
-from app.models import incident as incident_models, resource as resource_models, push as push_models, chat as chat_models
-from app.routers import resources, chat, incident, push
+from app.models import incident as incident_models, resource as resource_models, push as push_models, chat as chat_models, user as user_models
+from app.routers import resources, chat, incident, push, chat_history
 
 Base.metadata.create_all(bind=engine)
 
@@ -16,6 +16,10 @@ openapi_tags = [
     {
         "name": "Chatbot CiberGuardián",
         "description": "Motor heurístico de análisis de engaños, manipulación psicológica y cálculo del semáforo de riesgo (Verde, Amarillo, Rojo) con sugerencias de acción y plantilla empática para WhatsApp."
+    },
+    {
+        "name": "Historial de Chat",
+        "description": "Historial persistente de consultas analizadas, tarjeta de diagnóstico, Soft Delete y vinculación automática de sesiones anónimas (Auto-Claim)."
     },
     {
         "name": "Radar de Amenazas",
@@ -80,11 +84,14 @@ def health_check():
 
 # Rutas directas para Nginx Gateway y Swagger UI
 app.include_router(chat.router)
+app.include_router(chat_history.router)
 app.include_router(incident.router)
 app.include_router(push.router)
 app.include_router(resources.router)
 
-# Rutas espejo con prefijo /api/core para retrocompatibilidad sin duplicar documentación
+# Rutas espejo con prefijo /api/core y /api para retrocompatibilidad sin duplicar documentación
 app.include_router(chat.router, prefix="/api/core", include_in_schema=False)
+app.include_router(chat_history.router, prefix="/api/core", include_in_schema=False)
+app.include_router(chat_history.router, prefix="/api", include_in_schema=False)
 app.include_router(incident.router, prefix="/api/core", include_in_schema=False)
 app.include_router(push.router, prefix="/api/core", include_in_schema=False)

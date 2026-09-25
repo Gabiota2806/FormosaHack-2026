@@ -58,7 +58,7 @@ def login(login_in: UserLogin, db: Session = Depends(get_db)):
         if not totp.verify(login_in.totp_code, valid_window=1):
             raise HTTPException(status_code=401, detail="Código de autenticación 2FA incorrecto o expirado")
 
-    access_token = create_access_token({"sub": user.email, "role": user.role})
+    access_token = create_access_token({"sub": user.email, "role": user.role, "user_id": user.id})
     return Token(access_token=access_token, token_type="bearer", requires_2fa=False)
 
 @router.post("/2fa/setup", response_model=TOTPSetupResponse, summary="Generar clave y código QR para Google Authenticator")
