@@ -106,7 +106,7 @@
   * ⏳ **`FH26-45`** — `[TASK-006]` `[Maxi]` Modelado de Incidentes y Reportes con Soft Delete (3 SP) — `Por hacer`
   * ✅ **`FH26-46`** — `[TASK-007]` `[Maxi]` Repository Pattern en Core Service (Router->Service->Repo) (3 SP) — `Listo`
   * ✅ **`FH26-47`** — `[TASK-008]` `[Maxi]` Endpoints de Radar Paginado en Servidor y Filtros (5 SP) — `Listo`
-  * ⏳ **`FH26-48`** — `[TASK-009]` `[Maxi]` Seeder de Estafas Reales y Canales Verificados (2 SP) — `Por hacer`
+  * ✅ **`FH26-48`** — `[TASK-009]` `[Maxi]` Seeder de Estafas Reales y Canales Verificados (2 SP) — `Listo`
   * ⏳ **`FH26-49`** — `[TASK-015]` `[Valeria]` Vista del Radar de Amenazas con "A mí también me llegó" (3 SP) — `Por hacer`
 
 ---
@@ -138,7 +138,7 @@
 
 ## 🎯 Asignación Oficial de Trabajo por Duplas (Sprint 1)
 * **Dupla Backend (Gabriel Pineda + Maxi González):**
-  * Maxi González: `FH26-48` (2 SP pendientes).
+  * Maxi González: `FH26-48` (✅ Listo).
   * Gabriel Pineda: `FH26-39` (✅ Listo) + Integración y Soporte de Infraestructura.
 * **Dupla Frontend (Matías + Valeria Budiño):**
   * Matías: `FH26-40`, `FH26-41`, `FH26-42` (10 SP pendientes).
