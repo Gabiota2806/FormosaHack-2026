@@ -1,0 +1,41 @@
+// Voto anónimo: una huella aleatoria por navegador y la lista de amenazas ya votadas.
+// localStorage puede fallar (modo privado, datos bloqueados): en ese caso se usa memoria.
+
+const FINGERPRINT_KEY = 'user_fingerprint';
+const VOTED_KEY = 'radar_voted_ids';
+
+let memoryFingerprint: string | null = null;
+
+export function getFingerprint(): string {
+  try {
+    const stored = localStorage.getItem(FINGERPRINT_KEY);
+    if (stored) return stored;
+  } catch {
+    // Sin acceso a localStorage.
+  }
+
+  memoryFingerprint ??= `fp_${crypto.randomUUID().replace(/-/g, '')}`;
+  try {
+    localStorage.setItem(FINGERPRINT_KEY, memoryFingerprint);
+  } catch {
+    // Queda solo en memoria durante esta sesión.
+  }
+  return memoryFingerprint;
+}
+
+export function loadVotedIds(): Set<number> {
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(VOTED_KEY) ?? '[]');
+    return new Set(Array.isArray(parsed) ? parsed.filter((id): id is number => Number.isInteger(id)) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+export function saveVotedIds(ids: Set<number>) {
+  try {
+    localStorage.setItem(VOTED_KEY, JSON.stringify([...ids]));
+  } catch {
+    // Sin persistencia: el backend igual rechaza el voto repetido por huella.
+  }
+}
