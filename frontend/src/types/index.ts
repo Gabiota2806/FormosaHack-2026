@@ -52,3 +52,12 @@ export interface OfficialChannel {
   verified_whatsapp?: string;
   advice?: string;
 }
+
+/** Métricas agregadas del pulso comunitario (GET /api/core/incidents/stats). */
+export interface IncidentStats {
+  total_incidents: number;
+  total_votes: number;
+  verified_channels: number;
+  distinct_entities: number;
+  active_outbreaks_24h: number;
+}

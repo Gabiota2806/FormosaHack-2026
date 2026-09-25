@@ -4,6 +4,18 @@ import { describe, expect, it, vi } from 'vitest';
 import { EMERGENCY_CONTACTS, toTelHref } from '../sos/emergencyContacts';
 import { LandingPage } from './LandingPage';
 
+vi.mock('../../services/api', () => ({
+  incidentApi: {
+    getStats: vi.fn().mockResolvedValue({
+      total_incidents: 10,
+      total_votes: 262,
+      verified_channels: 5,
+      distinct_entities: 7,
+      active_outbreaks_24h: 1,
+    }),
+  },
+}));
+
 const renderLanding = () => {
   const onAction = vi.fn();
   render(<LandingPage onAction={onAction} />);
