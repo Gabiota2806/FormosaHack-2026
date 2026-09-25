@@ -1,9 +1,12 @@
 import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from app.core.security import limiter
 from app.database import engine, Base
 from app.models import incident as incident_models, resource as resource_models, push as push_models
-from app.routers import resources, chat, incident
+from app.routers import resources, chat, incident, push
 
 Base.metadata.create_all(bind=engine)
 
@@ -21,6 +24,10 @@ openapi_tags = [
     {
         "name": "Recursos Comunitarios",
         "description": "Directorio de recursos de asistencia, instituciones provinciales y contención familiar."
+    },
+    {
+        "name": "Notificaciones Push",
+        "description": "Suscripciones Web Push (VAPID), emisión de alertas nativas ante brotes masivos de estafas y comunicados de emergencia de moderadores con 2FA."
     },
     {
         "name": "Health",
@@ -47,6 +54,9 @@ Desarrollado para **FormosaHack 2026**. Proporciona protección perimetral e int
     redoc_url="/redoc"
 )
 
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 origins = os.getenv("CORS_ORIGINS", "*").split(",")
 app.add_middleware(
     CORSMiddleware,
@@ -71,8 +81,10 @@ def health_check():
 # Rutas directas para Nginx Gateway y Swagger UI
 app.include_router(chat.router)
 app.include_router(incident.router)
+app.include_router(push.router)
 app.include_router(resources.router)
 
 # Rutas espejo con prefijo /api/core para retrocompatibilidad sin duplicar documentación
 app.include_router(chat.router, prefix="/api/core", include_in_schema=False)
 app.include_router(incident.router, prefix="/api/core", include_in_schema=False)
+app.include_router(push.router, prefix="/api/core", include_in_schema=False)

@@ -1,6 +1,7 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session
+from app.core.security import get_current_moderator, limiter
 from app.database import get_db
 from app.schemas.incident import (
     IncidentCreate, 
@@ -11,12 +12,17 @@ from app.schemas.incident import (
     OfficialChannelResponse,
     IncidentStatsResponse
 )
+from app.schemas.push import BroadcastRequest, BroadcastResponse
 from app.services.incident_service import IncidentService
+from app.services.push_service import PushService, outbreak_check_task
 
 router = APIRouter(prefix="/incidents", tags=["Radar de Amenazas"])
 
 def get_incident_service() -> IncidentService:
     return IncidentService()
+
+def get_push_service() -> PushService:
+    return PushService()
 
 @router.get(
     "/stats",
@@ -56,10 +62,13 @@ def get_incidents(
 )
 def create_incident(
     payload: IncidentCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     service: IncidentService = Depends(get_incident_service)
 ):
-    return service.create_incident(db, payload)
+    created = service.create_incident(db, payload)
+    background_tasks.add_task(outbreak_check_task, created.id)
+    return created
 
 @router.post(
     "/{incident_id}/me-too",
@@ -70,6 +79,7 @@ def create_incident(
 def vote_incident(
     incident_id: int,
     payload: VoteRequest,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     service: IncidentService = Depends(get_incident_service)
 ):
@@ -79,6 +89,7 @@ def vote_incident(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Incidente no encontrado o eliminado."
         )
+    background_tasks.add_task(outbreak_check_task, incident_id)
     return result
 
 @router.delete(
@@ -96,6 +107,31 @@ def delete_incident(
     if not deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incidente no encontrado.")
     return None
+
+@router.post(
+    "/{incident_id}/broadcast-outbreak",
+    response_model=BroadcastResponse,
+    summary="Emitir comunicado de emergencia por brote de estafas (Moderador 2FA)",
+    description="Dispara manualmente la alerta push nativa a todos los dispositivos suscriptos. Requiere JWT de moderador (admin/operator) con 2FA TOTP completado. Protegido con Rate Limiting."
+)
+@limiter.limit("5/minute")
+def broadcast_outbreak(
+    request: Request,
+    incident_id: int,
+    payload: BroadcastRequest,
+    moderator: dict = Depends(get_current_moderator),
+    db: Session = Depends(get_db),
+    push_service: PushService = Depends(get_push_service)
+):
+    result = push_service.broadcast_moderator_communique(
+        db, incident_id, title=payload.title, body=payload.body, url=payload.url
+    )
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Incidente no encontrado o eliminado."
+        )
+    return result
 
 @router.get(
     "/channels/verified",
