@@ -186,7 +186,12 @@ describe('App: landing y navegación', () => {
     render(<App />, { wrapper: ElderlyModeProvider });
 
     await user.click(screen.getByRole('button', { name: 'Analizar mensaje sospechoso' }));
-    await user.type(await screen.findByLabelText('Mensaje sospechoso'), `${SHARED}{Enter}`);
+    // Mientras el bot "escribe" la respuesta de prevención, el chat ignora envíos: esperarla.
+    await screen.findByText(PREVENTION_TEXT);
+    // paste en lugar de type: tipear tecla por tecla sobre la app entera es lento.
+    await user.click(screen.getByLabelText('Mensaje sospechoso'));
+    await user.paste(SHARED);
+    await user.keyboard('{Enter}');
     await user.click(await screen.findByRole('button', { name: 'Advertir a la comunidad en el Radar' }));
 
     expect(widgetPanel()).toHaveAttribute('inert');
