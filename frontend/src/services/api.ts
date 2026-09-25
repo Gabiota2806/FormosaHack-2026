@@ -42,6 +42,11 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError<{ detail?: string }>) => {
+    // Pedidos cancelados a propósito (AbortController): no son errores para el usuario.
+    if (axios.isCancel(error)) {
+      return Promise.reject(error);
+    }
+
     if (!error.response) {
       toast.error('No se pudo conectar con el servidor. Verifique su conexión de red.');
       return Promise.reject(error);
@@ -93,8 +98,8 @@ export const incidentApi = {
     entity?: string;
     vector?: string;
     search?: string;
-  }): Promise<IncidentPaginationResponse> => {
-    const res = await api.get<IncidentPaginationResponse>('/api/core/incidents', { params });
+  }, signal?: AbortSignal): Promise<IncidentPaginationResponse> => {
+    const res = await api.get<IncidentPaginationResponse>('/api/core/incidents', { params, signal });
     return res.data;
   },
   voteIncident: async (incidentId: number, fingerprint: string) => {
