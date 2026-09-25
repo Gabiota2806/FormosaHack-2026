@@ -7,7 +7,8 @@ from app.schemas.incident import (
     IncidentResponse, 
     IncidentPagination, 
     VoteResponse, 
-    OfficialChannelResponse
+    OfficialChannelResponse,
+    IncidentStatsResponse
 )
 
 class IncidentService:
@@ -84,3 +85,6 @@ class IncidentService:
     def list_verified_channels(self, db: Session) -> List[OfficialChannelResponse]:
         channels = self.repo.get_verified_channels(db)
         return [OfficialChannelResponse.model_validate(c) for c in channels]
+
+    def get_stats(self, db: Session) -> IncidentStatsResponse:
+        return IncidentStatsResponse(**self.repo.get_stats(db))

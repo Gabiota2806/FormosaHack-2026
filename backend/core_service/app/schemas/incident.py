@@ -43,6 +43,13 @@ class VoteResponse(BaseModel):
     votes_count: int
     message: str
 
+class IncidentStatsResponse(BaseModel):
+    total_incidents: int = Field(..., description="Total de amenazas registradas (excluye soft delete).")
+    total_votes: int = Field(..., description="Total de validaciones comunitarias ('A mí también me llegó').")
+    verified_channels: int = Field(..., description="Canales oficiales verificados disponibles.")
+    distinct_entities: int = Field(..., description="Entidades suplantadas distintas detectadas.")
+    active_outbreaks_24h: int = Field(..., description="Brotes activos en las últimas 24 horas (>=3 reportes por entidad).")
+
 class OfficialChannelResponse(BaseModel):
     id: int
     entity_name: str
