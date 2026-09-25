@@ -577,6 +577,22 @@ class ChatService:
                 "¿Dónde puedo verificar los canales oficiales?"
             ]
 
+        elif any(kw in q_lower for kw in whatsapp_keywords):
+            answer = (
+                "Si sospechás que intentaron o lograron apoderarse de tu cuenta de WhatsApp, podés recuperarla de inmediato:"
+            )
+            suggested_actions = [
+                "Abrí WhatsApp e ingresá tu número de teléfono para solicitar el código de activación por SMS de 6 dígitos.",
+                "Al ingresar el nuevo código, la sesión de los atacantes se cerrará automáticamente en su dispositivo.",
+                "Activá de inmediato la 'Verificación en dos pasos' con un PIN de 6 dígitos dentro de Ajustes > Cuenta en WhatsApp.",
+                "Avisá a tus familiares por llamada o mensaje normal que no atiendan pedidos de dinero desde tu número."
+            ]
+            followup_suggestions = [
+                "¿Qué hago si los estafadores activaron la verificación en dos pasos?",
+                "¿Cómo aviso a mis contactos de forma segura?",
+                "¿A dónde reporto este número en CiberGuardián?"
+            ]
+
         elif any(kw in q_lower for kw in malware_keywords):
             answer = (
                 "Si instalaste una aplicación que te enviaron o te solicitaron por llamada (como AnyDesk, TeamViewer o un archivo APK), "
@@ -610,22 +626,6 @@ class ChatService:
                 "¿Cómo bloqueo mi tarjeta Chigüé o débito Link por teléfono?",
                 "¿A dónde radico la denuncia policial en Formosa?",
                 "¿Qué datos necesita el banco para desconocer una transferencia?"
-            ]
-
-        elif any(kw in q_lower for kw in whatsapp_keywords):
-            answer = (
-                "Si sospechás que intentaron o lograron apoderarse de tu cuenta de WhatsApp, podés recuperarla de inmediato:"
-            )
-            suggested_actions = [
-                "Abrí WhatsApp e ingresá tu número de teléfono para solicitar el código de activación por SMS de 6 dígitos.",
-                "Al ingresar el nuevo código, la sesión de los atacantes se cerrará automáticamente en su dispositivo.",
-                "Activá de inmediato la 'Verificación en dos pasos' con un PIN de 6 dígitos dentro de Ajustes > Cuenta en WhatsApp.",
-                "Avisá a tus familiares por llamada o mensaje normal que no atiendan pedidos de dinero desde tu número."
-            ]
-            followup_suggestions = [
-                "¿Qué hago si los estafadores activaron la verificación en dos pasos?",
-                "¿Cómo aviso a mis contactos de forma segura?",
-                "¿A dónde reporto este número en CiberGuardián?"
             ]
 
         elif any(kw in q_lower for kw in report_keywords):
