@@ -6,6 +6,11 @@ const VOTED_KEY = 'radar_voted_ids';
 
 let memoryFingerprint: string | null = null;
 
+// crypto.getRandomValues y no crypto.randomUUID: randomUUID solo existe en contextos seguros
+// (HTTPS o localhost) y falla al abrir la app por http:// con una IP de la red local.
+const randomHex = (bytes: number) =>
+  Array.from(crypto.getRandomValues(new Uint8Array(bytes)), (b) => b.toString(16).padStart(2, '0')).join('');
+
 export function getFingerprint(): string {
   try {
     const stored = localStorage.getItem(FINGERPRINT_KEY);
@@ -14,7 +19,7 @@ export function getFingerprint(): string {
     // Sin acceso a localStorage.
   }
 
-  memoryFingerprint ??= `fp_${crypto.randomUUID().replace(/-/g, '')}`;
+  memoryFingerprint ??= `fp_${randomHex(16)}`;
   try {
     localStorage.setItem(FINGERPRINT_KEY, memoryFingerprint);
   } catch {

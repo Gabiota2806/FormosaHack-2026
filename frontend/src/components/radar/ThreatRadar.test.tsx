@@ -1,3 +1,4 @@
+import { AxiosError } from 'axios';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -133,6 +134,33 @@ describe('ThreatRadar', () => {
     expect(toast.info).toHaveBeenCalledWith('Ya has validado este incidente anteriormente desde este dispositivo.');
     expect(await screen.findByText('7 personas lo recibieron')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Ya avisaste que te llegó: Falso SMS/ })).toBeDisabled();
+  });
+
+  it('avisa con un toast si el voto falla por un error que no es de red', async () => {
+    const user = userEvent.setup();
+    voteIncident.mockRejectedValue(new TypeError('crypto.randomUUID is not a function'));
+    render(<ThreatRadar />);
+
+    await user.click(await screen.findByRole('button', { name: /A mí también me llegó: Falso SMS/ }));
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith('No pudimos registrar tu aviso. Intentá de nuevo.'),
+    );
+    // El voto no se registró: el botón vuelve a quedar disponible.
+    expect(screen.getByRole('button', { name: /A mí también me llegó: Falso SMS/ })).toBeEnabled();
+  });
+
+  it('no duplica el aviso cuando el error HTTP ya lo mostró el interceptor', async () => {
+    const user = userEvent.setup();
+    voteIncident.mockRejectedValue(new AxiosError('Network Error'));
+    render(<ThreatRadar />);
+
+    await user.click(await screen.findByRole('button', { name: /A mí también me llegó: Falso SMS/ }));
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /A mí también me llegó: Falso SMS/ })).toBeEnabled(),
+    );
+    expect(toast.error).not.toHaveBeenCalled();
   });
 
   it('recuerda los votos guardados al recargar la página', async () => {

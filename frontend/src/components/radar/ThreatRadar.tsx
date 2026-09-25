@@ -10,6 +10,7 @@ import {
   WifiOff,
   FilterX,
 } from 'lucide-react';
+import axios from 'axios';
 import { toast } from 'sonner';
 import { incidentApi } from '../../services/api';
 import { Button } from '../ui/Button';
@@ -88,8 +89,11 @@ export function ThreatRadar() {
         saveVotedIds(next);
         return next;
       });
-    } catch {
-      // El interceptor de api.ts ya mostró el error.
+    } catch (err) {
+      // Los errores HTTP ya los avisa el interceptor de api.ts; cualquier otro quedaría en silencio.
+      if (!axios.isAxiosError(err)) {
+        toast.error('No pudimos registrar tu aviso. Intentá de nuevo.');
+      }
     } finally {
       setVotingIds((prev) => {
         const next = new Set(prev);
