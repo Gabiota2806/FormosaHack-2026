@@ -130,6 +130,19 @@ describe('ChatAssistant', () => {
       expect(analyzeMessage).toHaveBeenCalledWith(SUSPICIOUS_TEXT);
     });
 
+    it('avisa una sola vez que tomó el mensaje compartido, aun con StrictMode', async () => {
+      analyzeMessage.mockResolvedValue(HIGH_RISK);
+      const onSharedMessageHandled = vi.fn();
+      render(
+        <StrictMode>
+          <ChatAssistant sharedMessage={SUSPICIOUS_TEXT} onSharedMessageHandled={onSharedMessageHandled} />
+        </StrictMode>,
+      );
+
+      await screen.findByText('ALERTA ROJA: intento de estafa.');
+      expect(onSharedMessageHandled).toHaveBeenCalledTimes(1);
+    });
+
     it('muestra la guía de error si falla el análisis', async () => {
       analyzeMessage.mockRejectedValue(new Error('Network Error'));
       render(<ChatAssistant sharedMessage={SUSPICIOUS_TEXT} />);

@@ -28,6 +28,8 @@ interface ChatAssistantProps {
   onOpenSos?: () => void;
   /** Mensaje compartido desde otra app (Web Share Target): se analiza apenas se abre el chat. */
   sharedMessage?: string;
+  /** Se llama al empezar a analizar sharedMessage, para que el padre lo descarte y no se repita. */
+  onSharedMessageHandled?: () => void;
 }
 
 // Límites del backend (ChatMessageRequest.message)
@@ -45,7 +47,12 @@ const WELCOME_MESSAGE: ChatMessage = {
   quickReplies: ENTRY_QUICK_REPLIES,
 };
 
-export function ChatAssistant({ onReportIncident, onOpenSos, sharedMessage }: ChatAssistantProps) {
+export function ChatAssistant({
+  onReportIncident,
+  onOpenSos,
+  sharedMessage,
+  onSharedMessageHandled,
+}: ChatAssistantProps) {
   const shared = sharedMessage?.trim();
   const sharedText = shared && shared.length >= MIN_LENGTH ? shared : undefined;
 
@@ -94,12 +101,14 @@ export function ChatAssistant({ onReportIncident, onOpenSos, sharedMessage }: Ch
     [pushMessages],
   );
 
-  // Una sola vez aunque StrictMode monte el componente dos veces en desarrollo.
+  // El ref evita el doble análisis de StrictMode en esta instancia; onSharedMessageHandled,
+  // que se repita cuando el chat se vuelve a montar (por ejemplo, al volver desde el Radar).
   useEffect(() => {
     if (!sharedText || sharedAnalysisStarted.current) return;
     sharedAnalysisStarted.current = true;
     requestAnalysis(sharedText);
-  }, [sharedText, requestAnalysis]);
+    onSharedMessageHandled?.();
+  }, [sharedText, requestAnalysis, onSharedMessageHandled]);
 
   const replyAfterDelay = (replies: NewChatMessage[], onDone?: () => void) => {
     setIsTyping(true);

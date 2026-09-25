@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Toaster, toast } from 'sonner';
 import { 
   ShieldCheck, 
@@ -34,7 +34,9 @@ export function App() {
   const [activeTab, setActiveTab] = useState<Tab>('chat');
   const [sosModalOpen, setSosModalOpen] = useState(false);
   // Mensaje compartido desde WhatsApp u otra app (Web Share Target, ver manifest.webmanifest).
-  const [sharedMessage] = useState(() => readSharedMessage(window.location.search));
+  const [sharedMessage, setSharedMessage] = useState(() => readSharedMessage(window.location.search));
+  // Una vez que el chat lo empezó a analizar se descarta: si no, se repetiría al volver a la pestaña.
+  const handleSharedMessageHandled = useCallback(() => setSharedMessage(null), []);
 
   useEffect(() => {
     if (!sharedMessage) return;
@@ -168,6 +170,7 @@ export function App() {
         {activeTab === 'chat' && (
           <ChatAssistant
             sharedMessage={sharedMessage?.text}
+            onSharedMessageHandled={handleSharedMessageHandled}
             onOpenSos={() => setSosModalOpen(true)}
             onReportIncident={() => {
               setActiveTab('radar');
