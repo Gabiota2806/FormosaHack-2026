@@ -108,6 +108,19 @@ class IncidentRepository:
             IncidentReport.created_at >= since
         ).group_by(IncidentReport.impersonated_entity).having(func.count(IncidentReport.id) >= 3).all()
 
+    def count_reports_by_entity_since(self, db: Session, entity: str, since: datetime) -> int:
+        return db.query(func.count(IncidentReport.id)).filter(
+            IncidentReport.deleted_at.is_(None),
+            func.lower(IncidentReport.impersonated_entity) == entity.lower(),
+            IncidentReport.created_at >= since
+        ).scalar()
+
+    def count_votes_since(self, db: Session, incident_id: int, since: datetime) -> int:
+        return db.query(func.count(IncidentVote.id)).filter(
+            IncidentVote.incident_id == incident_id,
+            IncidentVote.created_at >= since
+        ).scalar()
+
     def get_verified_channels(self, db: Session) -> List[OfficialChannel]:
         return db.query(OfficialChannel).filter(OfficialChannel.deleted_at.is_(None)).all()
 
