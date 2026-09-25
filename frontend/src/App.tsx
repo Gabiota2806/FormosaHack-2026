@@ -174,7 +174,12 @@ function AppShell({ sharedMessage }: { sharedMessage: SharedMessage | null }) {
             <div className="w-9 h-9 shrink-0 rounded-xl bg-gradient-to-br from-sky-500 to-brand-400 flex items-center justify-center text-white shadow-lg shadow-brand-500/20 transition-transform group-hover:scale-105">
               <ShieldCheck className="w-5 h-5" aria-hidden="true" />
             </div>
-            <span className="font-extrabold text-base sm:text-lg tracking-tight uppercase truncate">
+            {/* En Modo Abuelo, en celular, el nombre no entra junto a la navegación: queda el logo solo. */}
+            <span
+              className={`font-extrabold text-base sm:text-lg tracking-tight uppercase truncate${
+                elderlyMode ? ' max-sm:sr-only' : ''
+              }`}
+            >
               <span className="text-white">Ciber</span>
               <span className="text-brand-400 transition-colors group-hover:text-brand-300">Guardián</span>
             </span>
