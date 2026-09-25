@@ -35,7 +35,8 @@ class TestGeminiServiceUnit:
     """Pruebas unitarias para GeminiService, cliente asíncrono y structured output."""
 
     @pytest.mark.anyio
-    async def test_service_without_api_key_is_unavailable(self):
+    async def test_service_without_api_key_is_unavailable(self, monkeypatch):
+        monkeypatch.delenv("GEMINI_API_KEY", raising=False)
         service = GeminiService(api_key=None)
         assert service.is_available is False
         result = await service.analyze("Mensaje sospechoso de prueba")

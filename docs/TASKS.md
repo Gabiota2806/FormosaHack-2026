@@ -272,8 +272,8 @@
 ---
 
 ### 🔹 FH26-91: [US-17] Extensión de Navegador (Manifest V3) para Protección en Tiempo Real en PC
-* **Sprint Asignado:** `Sprint 2 - Pruebas y Demo` (ID: `118`) — Estado: `Por hacer` ⏳
-* **Épica Padre:** `FH26-5` | **Story Points:** 19 SP | **Estado:** `Por hacer` ⏳
+* **Sprint Asignado:** `Sprint 2 - Pruebas y Demo` (ID: `118`) — Estado: `Listo` ✅
+* **Épica Padre:** `FH26-5` | **Story Points:** 19 SP | **Estado:** `Listo` ✅
 * **Enunciado Ágil:**  
   *Como usuario de computadora de escritorio o notebook navegando en la web (WhatsApp Web, correo electrónico o sitios dudosos), quiero contar con una extensión de navegador Manifest V3 de CiberGuardián con menú contextual de 1-clic, popup de diagnóstico heurístico y detector proactivo de formularios sospechosos, para auditar textos engañosos al instante sin copiar y pegar manualmente y recibir advertencias visuales inmediatas antes de ingresar claves o tokens en dominios clonados de phishing.*
 * **Criterios de Aceptación (Gherkin):**
@@ -287,7 +287,7 @@
   * ✅ **`FH26-93`** — `[TASK-052]` `[Gabriel]` Cliente de Integración API con Core Service (/api/core/chat/message) y Fallback Offline (3 SP) — `Listo`
   * ✅ **`FH26-94`** — `[TASK-053]` `[Gabriel]` Content Script Detector de Phishing con Inyección Aislada vía Shadow DOM y Whitelist Oficial (5 SP) — `Listo`
   * ✅ **`FH26-95`** — `[TASK-054]` `[Gabriel]` Popup Compacto de Diagnóstico con Tailwind CSS, Lucide Icons y Deep-link al Webapp (5 SP) — `Listo`
-  * ⏳ **`FH26-96`** — `[TASK-055]` `[Gabriel]` Suite de Pruebas Automatizadas (Vitest + Mocks Chrome API) y Guía de Carga Local (3 SP) — `Por hacer`
+  * ✅ **`FH26-96`** — `[TASK-055]` `[Gabriel]` Suite de Pruebas Automatizadas (Vitest + Mocks Chrome API) y Guía de Carga Local (3 SP) — `Listo`
 
 ---
 
