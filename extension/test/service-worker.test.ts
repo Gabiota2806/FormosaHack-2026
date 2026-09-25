@@ -5,6 +5,7 @@ import {
   initializeContextMenu,
   extractPayloadFromClick,
   handleContextMenuClick,
+  executeAnalysisPipeline,
 } from '../src/background/service-worker.js';
 
 describe('Service Worker - Context Menu & Storage', () => {
@@ -116,5 +117,77 @@ describe('Service Worker - Context Menu & Storage', () => {
     const stored = mockStorage[STORAGE_KEY_LATEST] as typeof item;
     expect(stored).toBeDefined();
     expect(stored.status).toBe('error');
+  });
+
+  it('executeAnalysisPipeline debe actualizar el item a analyzed y configurar el badge con el nivel de riesgo', async () => {
+    const pendingItem = {
+      id: 'test-item-1',
+      text: 'Banco Formosa: ingrese su token para evitar bloqueo inmediato',
+      timestamp: Date.now(),
+      status: 'pending' as const,
+      charCount: 60,
+    };
+
+    const mockClient = {
+      analyzeMessage: vi.fn().mockResolvedValue({
+        success: true,
+        data: {
+          risk_level: 'HIGH',
+          risk_percentage: 90,
+          detected_entity: 'Banco Formosa',
+          detected_vector: 'WHATSAPP',
+          summary: 'Intento de estafa detectado',
+          immediate_action: 'No transfiera',
+          what_not_to_do: 'No comparta clave',
+          highlighted_phrases: [],
+          wa_share_text: 'Alerta',
+        },
+        isOfflineFallback: false,
+      }),
+    };
+
+    const analyzedItem = await executeAnalysisPipeline(pendingItem, mockClient as any);
+
+    expect(analyzedItem.status).toBe('analyzed');
+    expect(analyzedItem.result?.risk_level).toBe('HIGH');
+    expect(analyzedItem.isOffline).toBe(false);
+    expect(mockBadgeText).toBe('ALTO');
+    expect(mockBadgeColor).toBe('#EF4444');
+
+    const stored = mockStorage[STORAGE_KEY_LATEST] as typeof analyzedItem;
+    expect(stored.status).toBe('analyzed');
+    expect(stored.result?.detected_entity).toBe('Banco Formosa');
+  });
+
+  it('handleContextMenuClick con autoAnalyze: true debe ejecutar el flujo completo y almacenar el resultado', async () => {
+    const info = {
+      menuItemId: MENU_ITEM_ID,
+      selectionText: 'Hola má, cambié de número',
+      pageUrl: 'https://web.whatsapp.com',
+    } as chrome.contextMenus.OnClickData;
+
+    const mockClient = {
+      analyzeMessage: vi.fn().mockResolvedValue({
+        success: true,
+        data: {
+          risk_level: 'HIGH',
+          risk_percentage: 85,
+          detected_entity: null,
+          detected_vector: 'WHATSAPP',
+          summary: 'Suplantación familiar',
+          immediate_action: 'Llamar al familiar',
+          what_not_to_do: 'No transferir',
+          highlighted_phrases: [],
+          wa_share_text: 'Alerta',
+        },
+        isOfflineFallback: true,
+      }),
+    };
+
+    const item = await handleContextMenuClick(info, undefined, { autoAnalyze: true, client: mockClient as any });
+
+    expect(item.status).toBe('analyzed');
+    expect(item.isOffline).toBe(true);
+    expect(mockBadgeText).toBe('ALTO');
   });
 });
