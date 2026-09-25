@@ -12,10 +12,14 @@
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-title" content="CiberGuardián" />
     <script>
-      // Modo Protector Mayor: se aplica antes del primer render para no mostrar la versión chica
-      // un instante al abrir. Misma clave que src/components/protector/useProtectorMode.ts.
+      // Modo Abuelo: se aplica antes del primer render para no mostrar la versión chica un instante
+      // al abrir. Mismas claves que src/components/elderly/elderlyMode.ts
+      // (protector_mode es la del Modo Protector Mayor, al que reemplaza).
       try {
-        if (localStorage.getItem('protector_mode') === 'on') document.documentElement.dataset.protector = 'on';
+        var abuelo = localStorage.getItem('ciberguardian_modo_abuelo');
+        if (abuelo === 'true' || (abuelo === null && localStorage.getItem('protector_mode') === 'on')) {
+          document.documentElement.classList.add('modo-abuelo');
+        }
       } catch (e) {}
     </script>
   </head>

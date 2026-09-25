@@ -133,42 +133,48 @@ body {
 }
 
 /*
- * Modo Protector Mayor (FH26-50): letra XL y alto contraste.
- * Se activa con [data-protector="on"] en <html> (useProtectorMode y el script de index.html).
+ * Modo Abuelo (FH26-79): letra de 22px y contraste WCAG AAA (7:1 en texto normal).
+ * Se activa con la clase .modo-abuelo en <html> (ElderlyModeContext y el script de index.html).
+ * Reemplaza al Modo Protector Mayor (FH26-50).
  */
-:root[data-protector='on'] {
-  /* Tailwind mide tamaños y espacios en rem: al escalar la raíz, crecen juntos textos,
-     botones y zonas táctiles de toda la app. */
-  font-size: 125%;
+:root.modo-abuelo {
+  /* Tailwind mide tamaños y espacios en rem: al escalar la raíz a 22px (16px × 1,375),
+     crecen juntos textos, botones y zonas táctiles de toda la app. */
+  font-size: 137.5%;
 
-  /* Contraste sobre el fondo oscuro de la app: grises de texto secundario más claros. */
-  --color-slate-300: #e8eef3;
-  --color-slate-400: #d3dde5;
-  --color-slate-500: #aebdca;
+  /* Contraste sobre el fondo oscuro de la app: grises de texto secundario más claros
+     (≥ 8,6:1 sobre slate-800 y ≥ 10:1 sobre slate-900). */
+  --color-slate-300: #f5f8fa;
+  --color-slate-400: #e8eef3;
+  --color-slate-500: #d3dde5;
+
+  /* Rojos de emergencia más oscuros: el texto blanco encima pasa de 4,8:1 a 8,3:1. */
+  --color-red-500: #b91c1c;
+  --color-red-600: #991b1b;
 }
 
-/* Sobre superficies claras (tarjetas, burbujas, modales) los mismos grises se oscurecen.
+/* Sobre superficies claras (tarjetas, burbujas, modales) los mismos grises se oscurecen (≥ 8:1).
    Las variables se heredan: cada texto toma el contraste según el fondo que tiene debajo. */
-:root[data-protector='on'] :is(.bg-white, .bg-slate-50, .bg-slate-100) {
-  --color-slate-400: #4a5b6c;
-  --color-slate-500: #394856;
-  --color-slate-600: #2b3845;
+:root.modo-abuelo :is(.bg-white, .bg-slate-50, .bg-slate-100) {
+  --color-slate-400: #394856;
+  --color-slate-500: #2b3845;
+  --color-slate-600: #212c37;
 }
 
 /* Sobre los rojos de emergencia (banner de brote, encabezado SOS) el texto va en blanco puro. */
-:root[data-protector='on'] .text-red-50 {
+:root.modo-abuelo .text-red-50 {
   color: #fff;
 }
 
 /* Los tamaños fijos en px no escalan con la raíz: mínimo legible. */
-:root[data-protector='on'] .text-\[10px\],
-:root[data-protector='on'] .text-\[11px\] {
-  font-size: 0.8125rem;
+:root.modo-abuelo .text-\[10px\],
+:root.modo-abuelo .text-\[11px\] {
+  font-size: 0.75rem;
 }
 
 /* Menos distracciones: sin pulsos ni rebotes (el SOS sigue destacado, pero quieto). */
-:root[data-protector='on'] .animate-pulse,
-:root[data-protector='on'] .motion-safe\:animate-pulse,
-:root[data-protector='on'] .motion-safe\:animate-bounce {
+:root.modo-abuelo .animate-pulse,
+:root.modo-abuelo .motion-safe\:animate-pulse,
+:root.modo-abuelo .motion-safe\:animate-bounce {
   animation: none;
 }

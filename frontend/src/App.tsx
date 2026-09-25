@@ -17,7 +17,8 @@ import { SosModal } from './components/sos/SosModal';
 import { LandingPage } from './components/landing/LandingPage';
 import type { LandingAction } from './components/landing/types';
 import type { EntryMode } from './components/chat/types';
-import { ProtectorModeToggle } from './components/protector/ProtectorModeToggle';
+import { ElderlyModeToggle } from './components/elderly/ElderlyModeToggle';
+import { useElderlyMode } from './components/elderly/elderlyMode';
 import { clearShareParams, readSharedMessage } from './pwa/shareTarget';
 import { Button } from './components/ui/Button';
 import { Card } from './components/ui/Card';
@@ -47,6 +48,11 @@ export function App() {
   const handleSharedMessageHandled = useCallback(() => setSharedMessage(null), []);
   const handleChatEntryHandled = useCallback(() => setChatEntry(null), []);
   const openSos = useCallback(() => setSosModalOpen(true), []);
+
+  const { enabled: elderlyMode } = useElderlyMode();
+  // Modo Abuelo: sin la pestaña técnica de 2FA y, en celular, sin "Inicio" (el logo ya lleva ahí),
+  // para que con la letra de 22px el SOS entre en el header.
+  const navItems = elderlyMode ? NAV_ITEMS.filter(({ id }) => id !== 'auth') : NAV_ITEMS;
 
   const navigate = (tab: Tab) => {
     setActiveTab(tab);
@@ -142,7 +148,7 @@ export function App() {
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans selection:bg-brand-500/30">
       {/* Debajo del header (h-16 = 4rem): así los avisos no tapan la navegación ni el SOS.
-          En rem para que acompañe al header cuando el Modo Protector Mayor lo agranda. */}
+          En rem para que acompañe al header cuando el Modo Abuelo lo agranda. */}
       <Toaster
         position="top-right"
         richColors
@@ -171,7 +177,7 @@ export function App() {
 
           {/* Selector de Vistas y Botón de Pánico */}
           <nav className="flex items-center gap-1 sm:gap-2" aria-label="Secciones">
-            {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
+            {navItems.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
                 type="button"
@@ -180,6 +186,8 @@ export function App() {
                 aria-label={label}
                 title={label}
                 className={`relative px-2.5 sm:px-3 py-2 text-sm font-semibold transition-colors flex items-center gap-1.5 after:absolute after:inset-x-2 after:-bottom-[13px] after:h-0.5 after:rounded-full after:transition-colors ${
+                  elderlyMode && id === 'home' ? 'max-sm:hidden ' : ''
+                }${
                   activeTab === id
                     ? 'text-brand-400 after:bg-brand-400'
                     : 'text-slate-300 hover:text-white after:bg-transparent'
@@ -190,7 +198,7 @@ export function App() {
               </button>
             ))}
 
-            <ProtectorModeToggle />
+            <ElderlyModeToggle />
 
             <button
               type="button"
