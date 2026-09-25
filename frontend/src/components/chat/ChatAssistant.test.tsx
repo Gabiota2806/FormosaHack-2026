@@ -1,3 +1,4 @@
+import { StrictMode } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -112,5 +113,48 @@ describe('ChatAssistant', () => {
     await user.type(screen.getByLabelText('Mensaje sospechoso'), `${SUSPICIOUS_TEXT}{Enter}`);
 
     expect(await screen.findByText(ANALYSIS_ERROR_TEXT)).toBeInTheDocument();
+  });
+
+  describe('mensaje compartido desde otra app (Web Share Target)', () => {
+    it('lo muestra y lo analiza una sola vez, aun con StrictMode', async () => {
+      analyzeMessage.mockResolvedValue(HIGH_RISK);
+      render(
+        <StrictMode>
+          <ChatAssistant sharedMessage={`  ${SUSPICIOUS_TEXT}  `} />
+        </StrictMode>,
+      );
+
+      expect(screen.getByText(SUSPICIOUS_TEXT)).toBeInTheDocument();
+      expect(await screen.findByText('ALERTA ROJA: intento de estafa.')).toBeInTheDocument();
+      expect(analyzeMessage).toHaveBeenCalledTimes(1);
+      expect(analyzeMessage).toHaveBeenCalledWith(SUSPICIOUS_TEXT);
+    });
+
+    it('avisa una sola vez que tomó el mensaje compartido, aun con StrictMode', async () => {
+      analyzeMessage.mockResolvedValue(HIGH_RISK);
+      const onSharedMessageHandled = vi.fn();
+      render(
+        <StrictMode>
+          <ChatAssistant sharedMessage={SUSPICIOUS_TEXT} onSharedMessageHandled={onSharedMessageHandled} />
+        </StrictMode>,
+      );
+
+      await screen.findByText('ALERTA ROJA: intento de estafa.');
+      expect(onSharedMessageHandled).toHaveBeenCalledTimes(1);
+    });
+
+    it('muestra la guía de error si falla el análisis', async () => {
+      analyzeMessage.mockRejectedValue(new Error('Network Error'));
+      render(<ChatAssistant sharedMessage={SUSPICIOUS_TEXT} />);
+
+      expect(await screen.findByText(ANALYSIS_ERROR_TEXT)).toBeInTheDocument();
+    });
+
+    it('ignora un texto compartido demasiado corto', () => {
+      render(<ChatAssistant sharedMessage="ok" />);
+
+      expect(analyzeMessage).not.toHaveBeenCalled();
+      expect(screen.queryByText('ok')).not.toBeInTheDocument();
+    });
   });
 });

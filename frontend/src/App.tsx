@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Toaster, toast } from 'sonner';
 import { 
   ShieldCheck, 
@@ -13,6 +13,8 @@ import { api } from './services/api';
 import { ChatAssistant } from './components/chat/ChatAssistant';
 import { ThreatRadar } from './components/radar/ThreatRadar';
 import { SosModal } from './components/sos/SosModal';
+import { ProtectorModeToggle } from './components/protector/ProtectorModeToggle';
+import { clearShareParams, readSharedMessage } from './pwa/shareTarget';
 import { Button } from './components/ui/Button';
 import { Card } from './components/ui/Card';
 import { IconBadge } from './components/ui/IconBadge';
@@ -31,6 +33,22 @@ const NAV_ITEMS: { id: Tab; label: string; icon: typeof MessageSquare }[] = [
 export function App() {
   const [activeTab, setActiveTab] = useState<Tab>('chat');
   const [sosModalOpen, setSosModalOpen] = useState(false);
+  // Mensaje compartido desde WhatsApp u otra app (Web Share Target, ver manifest.webmanifest).
+  const [sharedMessage, setSharedMessage] = useState(() => readSharedMessage(window.location.search));
+  // Una vez que el chat lo empezó a analizar se descarta: si no, se repetiría al volver a la pestaña.
+  const handleSharedMessageHandled = useCallback(() => setSharedMessage(null), []);
+
+  useEffect(() => {
+    if (!sharedMessage) return;
+    clearShareParams();
+    toast.info(
+      sharedMessage.truncated
+        ? 'Recibimos el mensaje que compartiste. Era muy largo: analizamos la primera parte.'
+        : 'Recibimos el mensaje que compartiste. Lo estamos analizando.',
+      // id fijo: si el efecto corre dos veces (StrictMode), Sonner no duplica el aviso.
+      { id: 'shared-message' },
+    );
+  }, [sharedMessage]);
 
   // Estado de 2FA & Auth
   const [userEmail, setUserEmail] = useState('');
@@ -88,7 +106,14 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans selection:bg-brand-500/30">
-      <Toaster position="top-right" richColors />
+      {/* Debajo del header (h-16 = 4rem): así los avisos no tapan la navegación ni el SOS.
+          En rem para que acompañe al header cuando el Modo Protector Mayor lo agranda. */}
+      <Toaster
+        position="top-right"
+        richColors
+        offset={{ top: '4.75rem', right: '1rem' }}
+        mobileOffset={{ top: '4.75rem', right: '0.75rem', left: '0.75rem' }}
+      />
 
       {/* Header de Navegación */}
       <header className="border-b border-slate-800 bg-slate-900/85 backdrop-blur-md sticky top-0 z-40">
@@ -123,6 +148,8 @@ export function App() {
               </button>
             ))}
 
+            <ProtectorModeToggle />
+
             <button
               type="button"
               onClick={() => setSosModalOpen(true)}
@@ -142,6 +169,8 @@ export function App() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'chat' && (
           <ChatAssistant
+            sharedMessage={sharedMessage?.text}
+            onSharedMessageHandled={handleSharedMessageHandled}
             onOpenSos={() => setSosModalOpen(true)}
             onReportIncident={() => {
               setActiveTab('radar');

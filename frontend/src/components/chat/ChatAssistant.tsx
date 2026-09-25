@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Send, RotateCcw, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { chatApi } from '../../services/api';
@@ -26,6 +26,10 @@ import { buildFamilyShareText, buildWhatsAppUrl } from './whatsappShare';
 interface ChatAssistantProps {
   onReportIncident?: (title: string, entity: string, vector: string, text: string) => void;
   onOpenSos?: () => void;
+  /** Mensaje compartido desde otra app (Web Share Target): se analiza apenas se abre el chat. */
+  sharedMessage?: string;
+  /** Se llama al empezar a analizar sharedMessage, para que el padre lo descarte y no se repita. */
+  onSharedMessageHandled?: () => void;
 }
 
 // Límites del backend (ChatMessageRequest.message)
@@ -43,12 +47,24 @@ const WELCOME_MESSAGE: ChatMessage = {
   quickReplies: ENTRY_QUICK_REPLIES,
 };
 
-export function ChatAssistant({ onReportIncident, onOpenSos }: ChatAssistantProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([WELCOME_MESSAGE]);
-  const [inputText, setInputText] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
+export function ChatAssistant({
+  onReportIncident,
+  onOpenSos,
+  sharedMessage,
+  onSharedMessageHandled,
+}: ChatAssistantProps) {
+  const shared = sharedMessage?.trim();
+  const sharedText = shared && shared.length >= MIN_LENGTH ? shared : undefined;
 
-  const nextId = useRef(1);
+  // Con un mensaje compartido, el chat arranca mostrándolo y "escribiendo" la respuesta.
+  const [messages, setMessages] = useState<ChatMessage[]>(() =>
+    sharedText ? [WELCOME_MESSAGE, { id: 1, role: 'user', text: sharedText } as ChatMessage] : [WELCOME_MESSAGE],
+  );
+  const [inputText, setInputText] = useState('');
+  const [isTyping, setIsTyping] = useState(Boolean(sharedText));
+
+  const nextId = useRef(sharedText ? 2 : 1);
+  const sharedAnalysisStarted = useRef(false);
   const pendingTimers = useRef<number[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -63,12 +79,36 @@ export function ChatAssistant({ onReportIncident, onOpenSos }: ChatAssistantProp
     el?.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  const pushMessages = (...newMessages: NewChatMessage[]) => {
+  const pushMessages = useCallback((...newMessages: NewChatMessage[]) => {
     setMessages((prev) => [
       ...prev,
       ...newMessages.map((m) => ({ ...m, id: nextId.current++ }) as ChatMessage),
     ]);
-  };
+  }, []);
+
+  const requestAnalysis = useCallback(
+    async (text: string) => {
+      try {
+        const analysis = await chatApi.analyzeMessage(text);
+        pushMessages({ role: 'bot', kind: 'analysis', analysis, sourceText: text });
+      } catch {
+        // El interceptor de api.ts ya mostró el toast; el chat deja una guía mínima.
+        pushMessages({ role: 'bot', kind: 'text', text: ANALYSIS_ERROR_TEXT });
+      } finally {
+        setIsTyping(false);
+      }
+    },
+    [pushMessages],
+  );
+
+  // El ref evita el doble análisis de StrictMode en esta instancia; onSharedMessageHandled,
+  // que se repita cuando el chat se vuelve a montar (por ejemplo, al volver desde el Radar).
+  useEffect(() => {
+    if (!sharedText || sharedAnalysisStarted.current) return;
+    sharedAnalysisStarted.current = true;
+    requestAnalysis(sharedText);
+    onSharedMessageHandled?.();
+  }, [sharedText, requestAnalysis, onSharedMessageHandled]);
 
   const replyAfterDelay = (replies: NewChatMessage[], onDone?: () => void) => {
     setIsTyping(true);
@@ -113,15 +153,7 @@ export function ChatAssistant({ onReportIncident, onOpenSos }: ChatAssistantProp
     pushMessages({ role: 'user', text });
     setInputText('');
     setIsTyping(true);
-    try {
-      const analysis = await chatApi.analyzeMessage(text);
-      pushMessages({ role: 'bot', kind: 'analysis', analysis, sourceText: text });
-    } catch {
-      // El interceptor de api.ts ya mostró el toast; el chat deja una guía mínima.
-      pushMessages({ role: 'bot', kind: 'text', text: ANALYSIS_ERROR_TEXT });
-    } finally {
-      setIsTyping(false);
-    }
+    await requestAnalysis(text);
   };
 
   const handleQuickReply = (reply: QuickReply) => {

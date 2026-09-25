@@ -104,3 +104,44 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/*
+ * Modo Protector Mayor (FH26-50): letra XL y alto contraste.
+ * Se activa con [data-protector="on"] en <html> (useProtectorMode y el script de index.html).
+ */
+:root[data-protector='on'] {
+  /* Tailwind mide tamaños y espacios en rem: al escalar la raíz, crecen juntos textos,
+     botones y zonas táctiles de toda la app. */
+  font-size: 125%;
+
+  /* Contraste sobre el fondo oscuro de la app: grises de texto secundario más claros. */
+  --color-slate-300: #e8eef3;
+  --color-slate-400: #d3dde5;
+  --color-slate-500: #aebdca;
+}
+
+/* Sobre superficies claras (tarjetas, burbujas, modales) los mismos grises se oscurecen.
+   Las variables se heredan: cada texto toma el contraste según el fondo que tiene debajo. */
+:root[data-protector='on'] :is(.bg-white, .bg-slate-50, .bg-slate-100) {
+  --color-slate-400: #4a5b6c;
+  --color-slate-500: #394856;
+  --color-slate-600: #2b3845;
+}
+
+/* Sobre los rojos de emergencia (banner de brote, encabezado SOS) el texto va en blanco puro. */
+:root[data-protector='on'] .text-red-50 {
+  color: #fff;
+}
+
+/* Los tamaños fijos en px no escalan con la raíz: mínimo legible. */
+:root[data-protector='on'] .text-\[10px\],
+:root[data-protector='on'] .text-\[11px\] {
+  font-size: 0.8125rem;
+}
+
+/* Menos distracciones: sin pulsos ni rebotes (el SOS sigue destacado, pero quieto). */
+:root[data-protector='on'] .animate-pulse,
+:root[data-protector='on'] .motion-safe\:animate-pulse,
+:root[data-protector='on'] .motion-safe\:animate-bounce {
+  animation: none;
+}

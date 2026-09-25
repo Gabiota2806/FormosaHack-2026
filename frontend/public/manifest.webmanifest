@@ -1,0 +1,45 @@
+{
+  "id": "/",
+  "name": "CiberGuardián",
+  "short_name": "CiberGuardián",
+  "description": "Asistente ciudadano para reconocer estafas digitales y pedir auxilio rápido.",
+  "lang": "es-AR",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#212c37",
+  "theme_color": "#212c37",
+  "categories": ["security", "utilities"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/chat-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "El asistente analiza un mensaje sospechoso y muestra el semáforo de riesgo"
+    },
+    {
+      "src": "/screenshots/chat-narrow.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Diagnóstico de riesgo con qué hacer y qué no hacer"
+    }
+  ],
+  "share_target": {
+    "action": "/",
+    "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
+}
