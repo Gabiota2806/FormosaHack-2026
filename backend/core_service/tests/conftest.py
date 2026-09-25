@@ -5,6 +5,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+os.environ.pop("GEMINI_API_KEY", None)
 
 
 @pytest.fixture(autouse=True)

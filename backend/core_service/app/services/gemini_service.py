@@ -67,11 +67,11 @@ class GeminiService:
         self,
         api_key: Optional[str] = None,
         model: Optional[str] = None,
-        timeout: float = 2.5
+        timeout: Optional[float] = None
     ):
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
-        self.model = model or os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
-        self.timeout = timeout
+        self.model = model or os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
+        self.timeout = timeout if timeout is not None else float(os.getenv("GEMINI_TIMEOUT", "25.0"))
         self._client: Optional[genai.Client] = None
 
         if self.api_key and self.api_key.strip():

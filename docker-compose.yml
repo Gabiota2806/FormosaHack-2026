@@ -53,7 +53,8 @@ services:
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       VAPID_CLAIMS_EMAIL: ${VAPID_CLAIMS_EMAIL:-admin@ciberguardian.gob.ar}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
-      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash-lite}
+      GEMINI_TIMEOUT: ${GEMINI_TIMEOUT:-25.0}
     depends_on:
       postgres:
         condition: service_healthy

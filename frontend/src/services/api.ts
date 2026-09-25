@@ -67,7 +67,11 @@ api.interceptors.response.use(
     }
 
     if (!error.response) {
-      toast.error('No se pudo conectar con el servidor. Verifique su conexión de red.');
+      if (error.code === 'ECONNABORTED') {
+        toast.error('La consulta tardó más de lo esperado. Por favor, intente nuevamente.');
+      } else {
+        toast.error('No se pudo conectar con el servidor. Verifique su conexión de red.');
+      }
       return Promise.reject(error);
     }
 
@@ -115,12 +119,17 @@ export const chatApi = {
     const res = await api.post<ChatAnalysisResponse>(
       '/api/core/chat/message',
       { message },
-      sessionKey ? { headers: { 'X-Session-Key': sessionKey } } : undefined,
+      {
+        timeout: 35000,
+        headers: sessionKey ? { 'X-Session-Key': sessionKey } : undefined,
+      },
     );
     return res.data;
   },
   followUp: async (request: ChatFollowupRequest): Promise<ChatFollowupResponse> => {
-    const res = await api.post<ChatFollowupResponse>('/api/core/chat/followup', request);
+    const res = await api.post<ChatFollowupResponse>('/api/core/chat/followup', request, {
+      timeout: 35000,
+    });
     return res.data;
   },
 };
