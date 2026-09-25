@@ -33,6 +33,21 @@ const CATEGORY_STYLES: Record<string, CategoryStyle> = {
     mark: 'bg-violet-100 text-violet-900',
     dot: 'bg-violet-500',
   },
+  FAMILY_IMPERSONATION: {
+    label: 'Se hace pasar por un familiar',
+    mark: 'bg-orange-100 text-orange-900',
+    dot: 'bg-orange-500',
+  },
+  COMMUNITY_OUTBREAK: {
+    label: 'Coincide con un brote reportado',
+    mark: 'bg-red-200 text-red-950 underline decoration-red-600 underline-offset-2',
+    dot: 'bg-red-600',
+  },
+  PROMPT_INJECTION: {
+    label: 'Intenta manipular al asistente',
+    mark: 'bg-fuchsia-100 text-fuchsia-900',
+    dot: 'bg-fuchsia-500',
+  },
 };
 
 const FALLBACK_STYLE: CategoryStyle = {

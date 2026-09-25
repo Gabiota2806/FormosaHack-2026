@@ -61,3 +61,35 @@ export interface IncidentStats {
   distinct_entities: number;
   active_outbreaks_24h: number;
 }
+
+/** Turno del hilo de seguimiento (POST /api/core/chat/followup). */
+export interface ChatFollowupTurn {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface EmergencyContact {
+  name: string;
+  phone?: string | null;
+  /** PHONE, WHATSAPP o WEB. */
+  channel_type: string;
+  url?: string | null;
+  description?: string | null;
+}
+
+export interface ChatFollowupRequest {
+  question: string;
+  context_diagnosis?: ChatAnalysisResponse;
+  initial_message?: string;
+  history: ChatFollowupTurn[];
+  session_key?: string;
+}
+
+export interface ChatFollowupResponse {
+  answer: string;
+  suggested_actions: string[];
+  emergency_contacts: EmergencyContact[];
+  followup_suggestions: string[];
+  /** La respondió el motor heurístico local (Gemini no disponible). */
+  is_fallback: boolean;
+}

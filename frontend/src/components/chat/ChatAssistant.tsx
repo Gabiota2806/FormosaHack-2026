@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Send, RotateCcw, ShieldAlert } from 'lucide-react';
+import { MessageCircleQuestion, RotateCcw, ScanSearch, Send, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { chatApi } from '../../services/api';
-import type { ChatAnalysisResponse } from '../../types';
+import type { ChatAnalysisResponse, ChatFollowupTurn } from '../../types';
 import { Button } from '../ui/Button';
 import { cn } from '../ui/cn';
 import { IconBadge } from '../ui/IconBadge';
 import { ChatBubble } from './ChatBubble';
 import { ContentionCard } from './ContentionCard';
+import { DiagnosisPinnedBar } from './DiagnosisPinnedBar';
+import { FollowUpAnswer } from './FollowUpAnswer';
 import { RiskAnalysisCard } from './RiskAnalysisCard';
 import { ElderlyVerdictCard } from '../elderly/ElderlyVerdictCard';
 import { useElderlyMode } from '../elderly/elderlyMode';
@@ -18,6 +20,9 @@ import {
   ENTRY_OPTIONS,
   ENTRY_QUICK_REPLIES,
   EXAMPLE_MESSAGES,
+  FOLLOWUP_ERROR_TEXT,
+  FOLLOWUP_INTRO_TEXT,
+  FOLLOWUP_STARTER_QUESTIONS,
   PREVENTION_TEXT,
   SOS_TEXT,
   WELCOME_TEXT,
@@ -48,6 +53,26 @@ const MAX_LENGTH = 2000;
 /** Pausa antes de las respuestas guionadas para que el bot no conteste "en seco". */
 const SCRIPTED_REPLY_DELAY_MS = 700;
 
+// Seguimiento (POST /chat/followup): pregunta mínima y turnos previos que se envían como contexto.
+const MIN_QUESTION_LENGTH = 2;
+const MAX_HISTORY_TURNS = 8;
+
+/** Contexto del último análisis, sobre el que se hacen las preguntas de seguimiento (FH26-57). */
+interface FollowupContext {
+  analysis: ChatAnalysisResponse;
+  sourceText: string;
+  analysisMessageId: number;
+  sessionKey: string;
+  history: ChatFollowupTurn[];
+}
+
+// crypto.getRandomValues (y no randomUUID): también funciona por http:// con una IP.
+const newSessionKey = () =>
+  Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => b.toString(16).padStart(2, '0')).join('');
+
+const toAskReplies = (questions: string[]): QuickReply[] =>
+  questions.map((q) => ({ label: q, icon: MessageCircleQuestion, type: 'ask', text: q }));
+
 const WELCOME_MESSAGE: ChatMessage = {
   id: 0,
   role: 'bot',
@@ -70,6 +95,11 @@ export function ChatAssistant({
   const [messages, setMessages] = useState<ChatMessage[]>([WELCOME_MESSAGE]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [followup, setFollowup] = useState<FollowupContext | null>(null);
+  // Con un análisis hecho, lo que se escribe es una pregunta sobre ese mensaje (se puede volver a analizar).
+  const [mode, setMode] = useState<'analyze' | 'followup'>('analyze');
+  // ¿La tarjeta del diagnóstico está a la vista? Si no, se muestra el resumen fijo arriba.
+  const [diagnosisVisible, setDiagnosisVisible] = useState(true);
 
   const nextId = useRef(1);
   const pendingTimers = useRef<number[]>([]);
@@ -112,7 +142,13 @@ export function ChatAssistant({
       setIsTyping(true);
       try {
         const analysis = await chatApi.analyzeMessage(text);
-        pushMessages({ role: 'bot', kind: 'analysis', analysis, sourceText: text });
+        const analysisMessageId = nextId.current;
+        pushMessages(
+          { role: 'bot', kind: 'analysis', analysis, sourceText: text },
+          { role: 'bot', kind: 'text', text: FOLLOWUP_INTRO_TEXT, quickReplies: FOLLOWUP_STARTER_QUESTIONS },
+        );
+        setFollowup({ analysis, sourceText: text, analysisMessageId, sessionKey: newSessionKey(), history: [] });
+        setMode('followup');
       } catch {
         // El interceptor de api.ts ya mostró el toast; el chat deja una guía mínima.
         pushMessages({ role: 'bot', kind: 'text', text: ANALYSIS_ERROR_TEXT });
@@ -181,6 +217,81 @@ export function ChatAssistant({
     await requestAnalysis(text);
   };
 
+  const handleFollowUp = async (rawQuestion: string, fromComposer: boolean) => {
+    const context = followup;
+    const question = rawQuestion.trim();
+    if (!context) return;
+    if (question.length < MIN_QUESTION_LENGTH) {
+      toast.error('Escribí tu pregunta sobre el mensaje.');
+      return;
+    }
+
+    pushMessages({ role: 'user', text: question });
+    // Una pregunta sugerida no borra lo que la persona estaba escribiendo.
+    if (fromComposer) setInputText('');
+    setIsTyping(true);
+    try {
+      const response = await chatApi.followUp({
+        question,
+        context_diagnosis: context.analysis,
+        initial_message: context.sourceText,
+        history: context.history.slice(-MAX_HISTORY_TURNS),
+        session_key: context.sessionKey,
+      });
+      pushMessages({ role: 'bot', kind: 'followup', response });
+      // Solo si sigue siendo el mismo análisis (no se hizo "Nueva consulta" ni otro análisis mientras tanto).
+      setFollowup((current) =>
+        current?.sessionKey === context.sessionKey
+          ? {
+              ...current,
+              history: [
+                ...current.history,
+                { role: 'user', content: question },
+                { role: 'assistant', content: response.answer },
+              ],
+            }
+          : current,
+      );
+    } catch {
+      // El interceptor de api.ts ya mostró el toast; el chat deja una guía mínima.
+      pushMessages({ role: 'bot', kind: 'text', text: FOLLOWUP_ERROR_TEXT });
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  const isFollowupMode = mode === 'followup' && followup !== null;
+
+  const handleSubmit = () => {
+    if (isTyping) return;
+    if (isFollowupMode) handleFollowUp(inputText, true);
+    else handleAnalyze(inputText);
+  };
+
+  const switchMode = (next: 'analyze' | 'followup') => {
+    setMode(next);
+    inputRef.current?.focus();
+  };
+
+  // Resumen fijo: se observa si la tarjeta del último diagnóstico está dentro de la conversación visible.
+  const analysisMessageId = followup?.analysisMessageId;
+  useEffect(() => {
+    const root = scrollRef.current;
+    const card = analysisMessageId === undefined ? null : document.getElementById(`chat-msg-${analysisMessageId}`);
+    if (!root || !card || typeof IntersectionObserver === 'undefined') return;
+    const observer = new IntersectionObserver(([entry]) => setDiagnosisVisible(entry.isIntersecting), {
+      root,
+      threshold: 0.15,
+    });
+    observer.observe(card);
+    return () => observer.disconnect();
+  }, [analysisMessageId]);
+
+  const showDiagnosis = () => {
+    if (analysisMessageId === undefined) return;
+    document.getElementById(`chat-msg-${analysisMessageId}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  };
+
   // Pedidos del widget. No usa handleAnalyze: no debe borrar un borrador que la persona esté escribiendo.
   const handledRequestId = useRef<number | null>(null);
   useEffect(() => {
@@ -201,6 +312,7 @@ export function ChatAssistant({
 
   const handleQuickReply = (reply: QuickReply) => {
     if (reply.type === 'entry') handleEntry(reply.mode);
+    else if (reply.type === 'ask') handleFollowUp(reply.text, false);
     else handleAnalyze(reply.text);
   };
 
@@ -225,12 +337,15 @@ export function ChatAssistant({
     setIsTyping(false);
     setInputText('');
     setMessages([WELCOME_MESSAGE]);
+    setFollowup(null);
+    setMode('analyze');
+    setDiagnosisVisible(true);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault();
-      if (!isTyping) handleAnalyze(inputText);
+      handleSubmit();
     }
   };
 
@@ -240,6 +355,26 @@ export function ChatAssistant({
   useEffect(() => {
     onActivityChange?.(isActive);
   }, [isActive, onActivityChange]);
+
+  const renderQuickReplies = (replies: QuickReply[]) => (
+    <div className="px-3 pb-3 flex flex-col gap-2">
+      {replies.map((reply) => (
+        <button
+          key={reply.label}
+          type="button"
+          disabled={isTyping}
+          onClick={() => handleQuickReply(reply)}
+          className="group text-left text-sm font-medium px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 hover:border-brand-400 hover:bg-white hover:shadow-md hover:-translate-y-px disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 transition-all flex items-center gap-3"
+        >
+          <IconBadge
+            icon={reply.icon}
+            tone={reply.type === 'entry' && reply.mode === 'SOS' ? 'danger' : 'brand'}
+          />
+          {reply.label}
+        </button>
+      ))}
+    </div>
+  );
 
   const renderMessage = (msg: ChatMessage) => {
     if (msg.role === 'user') {
@@ -251,25 +386,7 @@ export function ChatAssistant({
         return (
           <ChatBubble role="bot">
             <p className="px-4 py-2.5 whitespace-pre-wrap">{msg.text}</p>
-            {msg.quickReplies && (
-              <div className="px-3 pb-3 flex flex-col gap-2">
-                {msg.quickReplies.map((reply) => (
-                  <button
-                    key={reply.label}
-                    type="button"
-                    disabled={isTyping}
-                    onClick={() => handleQuickReply(reply)}
-                    className="group text-left text-sm font-medium px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 hover:border-brand-400 hover:bg-white hover:shadow-md hover:-translate-y-px disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 transition-all flex items-center gap-3"
-                  >
-                    <IconBadge
-                      icon={reply.icon}
-                      tone={reply.type === 'entry' && reply.mode === 'SOS' ? 'danger' : 'brand'}
-                    />
-                    {reply.label}
-                  </button>
-                ))}
-              </div>
-            )}
+            {msg.quickReplies && renderQuickReplies(msg.quickReplies)}
           </ChatBubble>
         );
       case 'analysis':
@@ -299,6 +416,14 @@ export function ChatAssistant({
             <ContentionCard />
           </ChatBubble>
         );
+      case 'followup':
+        return (
+          <ChatBubble role="bot">
+            <FollowUpAnswer response={msg.response} />
+            {msg.response.followup_suggestions.length > 0 &&
+              renderQuickReplies(toAskReplies(msg.response.followup_suggestions))}
+          </ChatBubble>
+        );
     }
   };
 
@@ -323,6 +448,11 @@ export function ChatAssistant({
         </div>
       </div>
 
+      {/* Resumen fijo del diagnóstico mientras la tarjeta está fuera de la vista */}
+      {followup && !diagnosisVisible && (
+        <DiagnosisPinnedBar analysis={followup.analysis} onShowDiagnosis={showDiagnosis} />
+      )}
+
       {/* Conversación */}
       <div
         ref={scrollRef}
@@ -332,7 +462,9 @@ export function ChatAssistant({
         aria-label="Conversación con CiberGuardián"
       >
         {messages.map((msg) => (
-          <div key={msg.id}>{renderMessage(msg)}</div>
+          <div key={msg.id} id={`chat-msg-${msg.id}`}>
+            {renderMessage(msg)}
+          </div>
         ))}
         {isTyping && (
           <ChatBubble role="bot">
@@ -364,15 +496,35 @@ export function ChatAssistant({
           </div>
         )}
 
+        {followup && (
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+            {isFollowupMode ? (
+              <>
+                <span className="flex items-center gap-1.5 text-slate-300">
+                  <MessageCircleQuestion className="h-3.5 w-3.5 text-brand-400" aria-hidden="true" />
+                  Preguntando sobre el mensaje analizado
+                </span>
+                <Button variant="ghost" size="sm" icon={ScanSearch} onClick={() => switchMode('analyze')}>
+                  Analizar otro mensaje
+                </Button>
+              </>
+            ) : (
+              <Button variant="ghost" size="sm" icon={MessageCircleQuestion} onClick={() => switchMode('followup')}>
+                Seguir preguntando sobre el último mensaje
+              </Button>
+            )}
+          </div>
+        )}
+
         <form
           className="flex items-end gap-2"
           onSubmit={(e) => {
             e.preventDefault();
-            if (!isTyping) handleAnalyze(inputText);
+            handleSubmit();
           }}
         >
           <label htmlFor="chat-input" className="sr-only">
-            Mensaje sospechoso
+            {isFollowupMode ? 'Tu pregunta sobre el mensaje' : 'Mensaje sospechoso'}
           </label>
           <textarea
             id="chat-input"
@@ -382,15 +534,21 @@ export function ChatAssistant({
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Pegá acá el mensaje, SMS o enlace sospechoso…"
+            placeholder={
+              isFollowupMode
+                ? 'Preguntá lo que quieras sobre este mensaje…'
+                : 'Pegá acá el mensaje, SMS o enlace sospechoso…'
+            }
             className="flex-1 resize-none p-3 bg-slate-950/70 border border-slate-700 rounded-2xl text-sm text-slate-50 placeholder-slate-500 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/20 transition"
           />
           <Button
             type="submit"
             size="icon"
             icon={Send}
-            disabled={isTyping || inputText.trim().length < MIN_LENGTH}
-            aria-label="Analizar mensaje"
+            disabled={
+              isTyping || inputText.trim().length < (isFollowupMode ? MIN_QUESTION_LENGTH : MIN_LENGTH)
+            }
+            aria-label={isFollowupMode ? 'Enviar pregunta' : 'Analizar mensaje'}
           />
         </form>
         <p className={cn('text-[11px] text-slate-500 flex items-center gap-1', elderlyMode && 'max-sm:hidden')}>

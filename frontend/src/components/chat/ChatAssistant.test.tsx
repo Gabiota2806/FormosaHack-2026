@@ -80,7 +80,8 @@ describe('ChatAssistant', () => {
     expect(await screen.findByText('Riesgo Alto')).toBeInTheDocument();
     expect(screen.getByText('Probabilidad de engaño: 85%')).toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'Semáforo: Riesgo Alto' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Mensaje sospechoso')).toHaveValue('');
+    // Con un análisis hecho, la caja pasa a ser para preguntas de seguimiento.
+    expect(screen.getByLabelText('Tu pregunta sobre el mensaje')).toHaveValue('');
   });
 
   it('consulta a un familiar por WhatsApp con el mensaje y el diagnóstico', async () => {
