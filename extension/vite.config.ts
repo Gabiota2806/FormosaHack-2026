@@ -10,6 +10,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         'service-worker': resolve(import.meta.dirname, 'src/background/service-worker.ts'),
+        'content-script': resolve(import.meta.dirname, 'src/content/form-detector.ts'),
       },
       output: {
         entryFileNames: '[name].js',

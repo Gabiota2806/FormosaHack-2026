@@ -285,7 +285,7 @@
 * **Subtareas Técnicas Anidadas:**
   * ⏳ **`FH26-92`** — `[TASK-051]` `[Gabriel]` Estructura Base Manifest V3, Service Worker de Fondo y Menú Contextual (3 SP) — `Por hacer`
   * ✅ **`FH26-93`** — `[TASK-052]` `[Gabriel]` Cliente de Integración API con Core Service (/api/core/chat/message) y Fallback Offline (3 SP) — `Listo`
-  * ⏳ **`FH26-94`** — `[TASK-053]` `[Gabriel]` Content Script Detector de Phishing con Inyección Aislada vía Shadow DOM y Whitelist Oficial (5 SP) — `Por hacer`
+  * ✅ **`FH26-94`** — `[TASK-053]` `[Gabriel]` Content Script Detector de Phishing con Inyección Aislada vía Shadow DOM y Whitelist Oficial (5 SP) — `Listo`
   * ⏳ **`FH26-95`** — `[TASK-054]` `[Gabriel]` Popup Compacto de Diagnóstico con Tailwind CSS, Lucide Icons y Deep-link al Webapp (5 SP) — `Por hacer`
   * ⏳ **`FH26-96`** — `[TASK-055]` `[Gabriel]` Suite de Pruebas Automatizadas (Vitest + Mocks Chrome API) y Guía de Carga Local (3 SP) — `Por hacer`
 
