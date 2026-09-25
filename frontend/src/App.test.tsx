@@ -176,15 +176,30 @@ describe('App: Modo Abuelo', () => {
     window.history.replaceState(null, '', '/');
   });
 
-  it('oculta la pestaña técnica de 2FA mientras está activo', async () => {
+  it('oculta las pestañas técnicas y muestra el inicio de 3 botones', async () => {
     const user = userEvent.setup();
     render(<App />, { wrapper: ElderlyModeProvider });
     const secciones = screen.getByRole('navigation', { name: 'Secciones' });
 
     expect(within(secciones).getByRole('button', { name: '2FA & Auth' })).toBeInTheDocument();
+    expect(within(secciones).getByRole('button', { name: 'Radar Comunitario' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('switch', { name: 'Modo Abuelo / Simple' }));
     expect(within(secciones).queryByRole('button', { name: '2FA & Auth' })).not.toBeInTheDocument();
+    expect(within(secciones).queryByRole('button', { name: 'Radar Comunitario' })).not.toBeInTheDocument();
     expect(within(secciones).getByRole('button', { name: /SOS/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '¿En qué te ayudamos?' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('switch', { name: 'Modo Abuelo / Simple' }));
+    expect(screen.queryByRole('heading', { name: '¿En qué te ayudamos?' })).not.toBeInTheDocument();
+  });
+
+  it('"Pegar mensaje" abre el asistente para revisar un mensaje', async () => {
+    localStorage.setItem('ciberguardian_modo_abuelo', 'true');
+    const user = userEvent.setup();
+    render(<App />, { wrapper: ElderlyModeProvider });
+
+    await user.click(screen.getByRole('button', { name: /Pegar mensaje para revisar si es mentira/ }));
+    expect(await screen.findByText(PREVENTION_TEXT)).toBeInTheDocument();
   });
 });
