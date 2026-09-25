@@ -73,16 +73,18 @@ export function SosModal({ isOpen, onClose }: SosModalProps) {
         {/* Encabezado fijo: título y botón de cerrar siempre a mano */}
         <div
           data-testid="sos-modal-header"
-          className="shrink-0 bg-red-600 text-white pl-6 sm:pl-8 pr-3 sm:pr-4 py-5 flex items-center gap-3"
+          className="shrink-0 bg-red-600 text-white pl-6 sm:pl-8 pr-3 sm:pr-4 py-3 sm:py-5 flex items-center gap-3"
         >
-          <div className="w-12 h-12 shrink-0 rounded-full bg-white/15 flex items-center justify-center">
+          {/* En celular el encabezado va compacto: con el Modo Abuelo (letra de 22px), el ícono y la
+              bajada lo estiraban tanto que al cuerpo con scroll le quedaba una franja mínima. */}
+          <div className="hidden sm:flex w-12 h-12 shrink-0 rounded-full bg-white/15 items-center justify-center">
             <AlertOctagon className="w-6 h-6 motion-safe:animate-pulse" aria-hidden="true" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 id="sos-modal-title" className="text-xl font-bold tracking-tight">
+            <h3 id="sos-modal-title" className="text-lg sm:text-xl font-bold tracking-tight leading-tight">
               Protocolo de Auxilio y Contención SOS
             </h3>
-            <p id="sos-modal-desc" className="text-xs text-red-50">
+            <p id="sos-modal-desc" className="max-sm:sr-only text-xs text-red-50">
               Actuá con rapidez para congelar transacciones y resguardar tu evidencia.
             </p>
           </div>

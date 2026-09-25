@@ -30,7 +30,7 @@ const CHANNELS: Channel[] = [
   },
   {
     icon: ALargeSmall,
-    title: 'Modo Protector Mayor',
+    title: 'Modo Abuelo',
     description: 'Letra más grande y más contraste con un solo toque, pensado para los que más lo necesitan.',
   },
 ];

@@ -1,10 +1,11 @@
 import { StrictMode } from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { chatApi } from './services/api';
 import type { ChatAnalysisResponse } from './types';
 import App from './App';
+import { ElderlyModeProvider } from './components/elderly/ElderlyModeContext';
 import { CONTENTION, PREVENTION_TEXT, WELCOME_TEXT } from './components/chat/scripts';
 
 vi.mock('./services/api', () => ({
@@ -55,7 +56,7 @@ describe('App: mensaje compartido (Web Share Target)', () => {
   });
 
   it('analiza el mensaje compartido y limpia la URL', async () => {
-    render(<App />);
+    render(<App />, { wrapper: ElderlyModeProvider });
 
     expect(await screen.findByText('ALERTA ROJA: intento de estafa.')).toBeInTheDocument();
     expect(analyzeMessage).toHaveBeenCalledExactlyOnceWith(SHARED);
@@ -64,7 +65,7 @@ describe('App: mensaje compartido (Web Share Target)', () => {
 
   it('no vuelve a analizarlo al ir a otra pestaña y volver al Asistente', async () => {
     const user = userEvent.setup();
-    render(<App />);
+    render(<App />, { wrapper: ElderlyModeProvider });
     await screen.findByText('ALERTA ROJA: intento de estafa.');
 
     await user.click(screen.getByRole('button', { name: 'Radar Comunitario' }));
@@ -86,7 +87,7 @@ describe('App: landing y navegación', () => {
   const heroTitle = () => screen.queryByRole('heading', { level: 1, name: /frená la estafa/ });
 
   it('arranca en la landing con "Inicio" marcado', () => {
-    render(<App />);
+    render(<App />, { wrapper: ElderlyModeProvider });
 
     expect(heroTitle()).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Inicio' })).toHaveAttribute('aria-current', 'page');
@@ -94,7 +95,7 @@ describe('App: landing y navegación', () => {
 
   it('el logo vuelve a la landing desde otra sección', async () => {
     const user = userEvent.setup();
-    render(<App />);
+    render(<App />, { wrapper: ElderlyModeProvider });
 
     await user.click(screen.getByRole('button', { name: 'Asistente' }));
     expect(heroTitle()).not.toBeInTheDocument();
@@ -106,7 +107,7 @@ describe('App: landing y navegación', () => {
 
   it('el ítem "Inicio" vuelve a la landing', async () => {
     const user = userEvent.setup();
-    render(<App />);
+    render(<App />, { wrapper: ElderlyModeProvider });
 
     await user.click(screen.getByRole('button', { name: 'Radar Comunitario' }));
     await user.click(screen.getByRole('button', { name: 'Inicio' }));
@@ -115,7 +116,7 @@ describe('App: landing y navegación', () => {
 
   it('"Analizar mensaje sospechoso" abre el chat en el flujo de prevención', async () => {
     const user = userEvent.setup();
-    render(<App />);
+    render(<App />, { wrapper: ElderlyModeProvider });
 
     await user.click(screen.getByRole('button', { name: 'Analizar mensaje sospechoso' }));
 
@@ -125,7 +126,7 @@ describe('App: landing y navegación', () => {
 
   it('el momento "Durante" abre el chat en la contención', async () => {
     const user = userEvent.setup();
-    render(<App />);
+    render(<App />, { wrapper: ElderlyModeProvider });
 
     await user.click(screen.getByRole('button', { name: 'Qué hago ahora' }));
     expect(await screen.findByText(CONTENTION.title)).toBeInTheDocument();
@@ -133,7 +134,7 @@ describe('App: landing y navegación', () => {
 
   it('el SOS de la landing abre el protocolo de auxilio', async () => {
     const user = userEvent.setup();
-    render(<App />);
+    render(<App />, { wrapper: ElderlyModeProvider });
 
     await user.click(screen.getByRole('button', { name: 'Protocolo de auxilio SOS' }));
     expect(screen.getByRole('dialog', { name: /Protocolo de Auxilio/ })).toBeInTheDocument();
@@ -141,7 +142,7 @@ describe('App: landing y navegación', () => {
 
   it('no repite el momento de entrada al volver al chat desde otra sección', async () => {
     const user = userEvent.setup();
-    render(<App />);
+    render(<App />, { wrapper: ElderlyModeProvider });
     await user.click(screen.getByRole('button', { name: 'Analizar mensaje sospechoso' }));
     await screen.findByText(PREVENTION_TEXT);
 
@@ -158,11 +159,32 @@ describe('App: landing y navegación', () => {
       <StrictMode>
         <App />
       </StrictMode>,
+      { wrapper: ElderlyModeProvider },
     );
 
     await user.click(screen.getByRole('button', { name: 'Qué hago ahora' }));
     await screen.findByText(CONTENTION.title);
     await waitFor(() => expect(screen.queryByLabelText('CiberGuardián está escribiendo')).not.toBeInTheDocument());
     expect(screen.getAllByText(CONTENTION.title)).toHaveLength(1);
+  });
+});
+
+describe('App: Modo Abuelo', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    document.documentElement.classList.remove('modo-abuelo');
+    window.history.replaceState(null, '', '/');
+  });
+
+  it('oculta la pestaña técnica de 2FA mientras está activo', async () => {
+    const user = userEvent.setup();
+    render(<App />, { wrapper: ElderlyModeProvider });
+    const secciones = screen.getByRole('navigation', { name: 'Secciones' });
+
+    expect(within(secciones).getByRole('button', { name: '2FA & Auth' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('switch', { name: 'Modo Abuelo / Simple' }));
+    expect(within(secciones).queryByRole('button', { name: '2FA & Auth' })).not.toBeInTheDocument();
+    expect(within(secciones).getByRole('button', { name: /SOS/ })).toBeInTheDocument();
   });
 });
