@@ -12,6 +12,8 @@ export interface ChatRequest {
   message?: string;
   /** Volver a mostrar una consulta del historial (FH26-89). */
   restore?: RestoredConsultation;
+  /** Cambiar a una vista específica dentro del widget (FH26-88). */
+  view?: 'chat' | 'history';
 }
 
 export interface RestoredConsultation {
@@ -26,6 +28,8 @@ export interface OpenChatOptions {
   message?: string;
   /** Muestra una consulta del historial, lista para seguir preguntando sobre ella. */
   restore?: RestoredConsultation;
+  /** Abre directamente en la vista indicada ('chat' o 'history') (FH26-88). */
+  view?: 'chat' | 'history';
 }
 
 export interface ChatWidgetContextValue {

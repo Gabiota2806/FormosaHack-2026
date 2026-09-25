@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../contexts/AuthContext';
@@ -31,6 +31,14 @@ export function ChatWidget({ onOpenSos, onReportIncident }: ChatWidgetProps) {
   const [optedOut, setOptedOut] = useHistoryOptOut();
   const [view, setView] = useState<'chat' | 'history'>('chat');
   useAutoClaim();
+
+  // Si llega un pedido con vista específica (ej: 'history' desde UserDropdown), conmutar vista
+  useEffect(() => {
+    if (request?.view) {
+      setView(request.view);
+      onRequestHandled(request.id);
+    }
+  }, [request, onRequestHandled]);
 
   // Si se cierra la sesión con el historial abierto, se vuelve al chat.
   const showHistory = view === 'history' && isAuthenticated;

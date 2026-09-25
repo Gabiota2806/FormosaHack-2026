@@ -201,7 +201,7 @@ describe('App: landing y navegación', () => {
     const nav = screen.getByRole('navigation', { name: 'Secciones' });
 
     expect(within(nav).queryByRole('button', { name: 'Asistente' })).not.toBeInTheDocument();
-    for (const section of ['Radar Comunitario', '2FA & Auth', 'Inicio']) {
+    for (const section of ['Radar Comunitario', 'Inicio']) {
       await user.click(within(nav).getByRole('button', { name: section }));
       expect(screen.getByRole('button', { name: 'Abrir asistente CiberGuardián' })).toBeInTheDocument();
     }
@@ -253,11 +253,9 @@ describe('App: Modo Abuelo', () => {
     render(<App />, { wrapper: ElderlyModeProvider });
     const secciones = screen.getByRole('navigation', { name: 'Secciones' });
 
-    expect(within(secciones).getByRole('button', { name: '2FA & Auth' })).toBeInTheDocument();
     expect(within(secciones).getByRole('button', { name: 'Radar Comunitario' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('switch', { name: 'Modo Abuelo / Simple' }));
-    expect(within(secciones).queryByRole('button', { name: '2FA & Auth' })).not.toBeInTheDocument();
     expect(within(secciones).queryByRole('button', { name: 'Radar Comunitario' })).not.toBeInTheDocument();
     expect(within(secciones).getByRole('button', { name: /SOS/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '¿En qué te ayudamos?' })).toBeInTheDocument();
@@ -331,13 +329,19 @@ describe('App: enlace profundo de notificaciones push (FH26-75)', () => {
   });
 });
 
-describe('App: pestaña 2FA & Auth con AuthContext', () => {
+describe('App: acceso dinámico, modal de autenticación y UserDropdown (FH26-88)', () => {
   beforeEach(() => {
     localStorage.clear();
     window.history.replaceState(null, '', '/');
   });
 
-  it('permite iniciar sesión en la pestaña 2FA & Auth y muestra el estado autenticado', async () => {
+  it('no existe la pestaña fija "2FA & Auth" en la barra de navegación', () => {
+    render(<App />, { wrapper: ElderlyModeProvider });
+    const nav = screen.getByRole('navigation', { name: 'Secciones' });
+    expect(within(nav).queryByRole('button', { name: '2FA & Auth' })).not.toBeInTheDocument();
+  });
+
+  it('permite iniciar sesión desde el botón "Ingresar", abre modal y conmuta a UserDropdown', async () => {
     const user = userEvent.setup();
     const { authApi } = await import('./services/api');
     vi.mocked(authApi.login).mockResolvedValueOnce({
@@ -355,22 +359,30 @@ describe('App: pestaña 2FA & Auth con AuthContext', () => {
 
     render(<App />, { wrapper: ElderlyModeProvider });
 
-    await user.click(screen.getByRole('button', { name: '2FA & Auth' }));
-    expect(screen.getByRole('heading', { name: 'Iniciar Sesión' })).toBeInTheDocument();
+    const ingresarBtn = screen.getByRole('button', { name: /Ingresar al sistema/i });
+    expect(ingresarBtn).toBeInTheDocument();
 
-    const emailInputs = screen.getAllByLabelText('Correo electrónico');
-    const passwordInputs = screen.getAllByLabelText('Contraseña');
+    await user.click(ingresarBtn);
+    expect(screen.getByRole('dialog', { name: 'Iniciar Sesión' })).toBeInTheDocument();
 
-    await user.type(emailInputs[1], 'gabriel@formosa.gob.ar');
-    await user.type(passwordInputs[1], 'password123');
+    await user.type(screen.getByLabelText('Correo electrónico'), 'gabriel@formosa.gob.ar');
+    await user.type(screen.getByLabelText('Contraseña'), 'password123');
     await user.click(screen.getByRole('button', { name: 'Iniciar Sesión' }));
 
-    expect(await screen.findByText(/Sesión iniciada como/)).toBeInTheDocument();
-    expect(screen.getByText('2FA Activo')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Cerrar Sesión' })).toBeInTheDocument();
+    // El modal se cierra y el botón en el header conmuta al dropdown de usuario
+    expect(screen.queryByRole('dialog', { name: 'Iniciar Sesión' })).not.toBeInTheDocument();
+    const userPill = await screen.findByRole('button', { name: /Menú de usuario/i });
+    expect(userPill).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Cerrar Sesión' }));
-    expect(await screen.findByRole('heading', { name: 'Iniciar Sesión' })).toBeInTheDocument();
+    // Desplegar menú de usuario
+    await user.click(userPill);
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+    expect(screen.getByText('2FA Activo')).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Cerrar Sesión' })).toBeInTheDocument();
+
+    // Cerrar sesión
+    await user.click(screen.getByRole('menuitem', { name: 'Cerrar Sesión' }));
+    expect(await screen.findByRole('button', { name: /Ingresar al sistema/i })).toBeInTheDocument();
   });
 });
 
