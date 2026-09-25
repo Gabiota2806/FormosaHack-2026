@@ -110,3 +110,21 @@ class IncidentRepository:
 
     def get_verified_channels(self, db: Session) -> List[OfficialChannel]:
         return db.query(OfficialChannel).filter(OfficialChannel.deleted_at.is_(None)).all()
+
+    def get_stats(self, db: Session) -> dict:
+        incidents_row = db.query(
+            func.count(IncidentReport.id),
+            func.coalesce(func.sum(IncidentReport.votes_count), 0),
+            func.count(func.distinct(IncidentReport.impersonated_entity))
+        ).filter(IncidentReport.deleted_at.is_(None)).one()
+
+        verified_channels = db.query(func.count(OfficialChannel.id)).filter(OfficialChannel.deleted_at.is_(None)).scalar()
+        active_outbreaks = len(self.get_recent_reports_count_by_entity(db, hours=24))
+
+        return {
+            "total_incidents": incidents_row[0],
+            "total_votes": int(incidents_row[1]),
+            "verified_channels": verified_channels,
+            "distinct_entities": incidents_row[2],
+            "active_outbreaks_24h": active_outbreaks,
+        }

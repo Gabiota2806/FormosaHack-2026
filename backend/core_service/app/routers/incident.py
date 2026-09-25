@@ -8,7 +8,8 @@ from app.schemas.incident import (
     IncidentPagination, 
     VoteRequest, 
     VoteResponse, 
-    OfficialChannelResponse
+    OfficialChannelResponse,
+    IncidentStatsResponse
 )
 from app.services.incident_service import IncidentService
 
@@ -16,6 +17,18 @@ router = APIRouter(prefix="/incidents", tags=["Radar de Amenazas"])
 
 def get_incident_service() -> IncidentService:
     return IncidentService()
+
+@router.get(
+    "/stats",
+    response_model=IncidentStatsResponse,
+    summary="Métricas agregadas del pulso comunitario",
+    description="Retorna contadores en tiempo real para la Landing Page: amenazas registradas, validaciones comunitarias, canales verificados y brotes activos en las últimas 24 horas."
+)
+def get_incident_stats(
+    db: Session = Depends(get_db),
+    service: IncidentService = Depends(get_incident_service)
+):
+    return service.get_stats(db)
 
 @router.get(
     "",
