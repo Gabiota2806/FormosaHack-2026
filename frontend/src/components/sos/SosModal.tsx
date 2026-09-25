@@ -65,14 +65,20 @@ export function SosModal({ isOpen, onClose }: SosModalProps) {
         aria-modal="true"
         aria-labelledby="sos-modal-title"
         aria-describedby="sos-modal-desc"
-        className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-clip rounded-3xl bg-white text-slate-800 shadow-2xl shadow-black/40 animate-fade-up"
+        // Columna flexible: el diálogo no scrollea (overflow-hidden recorta todo dentro de las
+        // esquinas de 24px); solo scrollea el cuerpo, y el encabezado queda siempre visible.
+        // dvh y no vh: en el celular, vh no descuenta la barra del navegador.
+        className="relative w-full max-w-2xl max-h-[90dvh] flex flex-col overflow-hidden rounded-3xl bg-white text-slate-800 shadow-2xl shadow-black/40 animate-fade-up"
       >
-        {/* Encabezado */}
-        <div className="bg-red-600 text-white px-6 sm:px-8 py-5 flex items-center gap-3 pr-16">
+        {/* Encabezado fijo: título y botón de cerrar siempre a mano */}
+        <div
+          data-testid="sos-modal-header"
+          className="shrink-0 bg-red-600 text-white pl-6 sm:pl-8 pr-3 sm:pr-4 py-5 flex items-center gap-3"
+        >
           <div className="w-12 h-12 shrink-0 rounded-full bg-white/15 flex items-center justify-center">
             <AlertOctagon className="w-6 h-6 motion-safe:animate-pulse" aria-hidden="true" />
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <h3 id="sos-modal-title" className="text-xl font-bold tracking-tight">
               Protocolo de Auxilio y Contención SOS
             </h3>
@@ -80,20 +86,22 @@ export function SosModal({ isOpen, onClose }: SosModalProps) {
               Actuá con rapidez para congelar transacciones y resguardar tu evidencia.
             </p>
           </div>
+
+          {/* Dentro del encabezado (antes, posicionado encima del contenido que scrolleaba) */}
+          <button
+            ref={closeButtonRef}
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar protocolo SOS"
+            className="shrink-0 self-start w-11 h-11 flex items-center justify-center rounded-xl text-white/80 hover:text-white hover:bg-white/15 transition-colors focus-visible:outline-2 focus-visible:outline-white"
+          >
+            <X className="w-5 h-5" aria-hidden="true" />
+          </button>
         </div>
 
-        {/* Botón Cerrar */}
-        <button
-          ref={closeButtonRef}
-          type="button"
-          onClick={onClose}
-          aria-label="Cerrar protocolo SOS"
-          className="absolute right-4 top-4 p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/15 transition-colors focus-visible:outline-2 focus-visible:outline-white"
-        >
-          <X className="w-5 h-5" aria-hidden="true" />
-        </button>
-
-        <div className="p-6 sm:p-8">
+        {/* Cuerpo: único contenedor con scroll. min-h-0 permite que el flex item se achique
+            por debajo de su contenido; overscroll-contain evita arrastrar la página de atrás. */}
+        <div data-testid="sos-modal-body" className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-subtle p-6 sm:p-8">
           {/* Selector de Pestañas */}
           <div
             role="tablist"
