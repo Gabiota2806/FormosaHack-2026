@@ -1,5 +1,5 @@
-from datetime import datetime
 from sqlalchemy import Column, Integer, String, Text, DateTime, JSON
+from sqlalchemy.sql import func
 from app.database import Base
 
 class ResourceItem(Base):
@@ -12,6 +12,6 @@ class ResourceItem(Base):
     status = Column(String(50), default="active", nullable=False, index=True)
     location = Column(String(150), default="Formosa Capital", nullable=False)
     extra_data = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-    deleted_at = Column(DateTime, nullable=True, index=True)  # Soft Delete
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)  # Soft Delete

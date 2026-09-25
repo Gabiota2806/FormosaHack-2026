@@ -10,11 +10,6 @@ from app.database import Base, engine
 
 client = TestClient(app)
 
-@pytest.fixture(autouse=True)
-def setup_db():
-    Base.metadata.create_all(bind=engine)
-    yield
-    Base.metadata.drop_all(bind=engine)
 
 def test_health_check():
     response = client.get("/health")

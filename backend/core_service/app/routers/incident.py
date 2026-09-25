@@ -61,9 +61,11 @@ def vote_incident(
     service: IncidentService = Depends(get_incident_service)
 ):
     result = service.vote_incident(db, incident_id, payload.user_fingerprint)
-    if not result.success:
-        # Se retorna 200 con success: False para manejo amigable en frontend
-        return result
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Incidente no encontrado o eliminado."
+        )
     return result
 
 @router.delete(
