@@ -7,7 +7,16 @@ import type {
   IncidentPaginationResponse, 
   IncidentItem,
   IncidentStats,
-  OfficialChannel 
+  OfficialChannel,
+  User,
+  LoginPayload,
+  RegisterPayload,
+  TokenResponse,
+  TOTPSetupResponse,
+  TOTPVerifyResponse,
+  ChatHistoryEntry,
+  ChatHistoryPage,
+  ChatSessionOut,
 } from '../types';
 
 declare module 'axios' {
@@ -72,6 +81,9 @@ api.interceptors.response.use(
       case 401:
         toast.error('Sesión expirada o credenciales inválidas.');
         localStorage.removeItem('access_token');
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('auth:expired'));
+        }
         break;
       case 403:
         toast.error('No tiene permisos suficientes para realizar esta acción.');
@@ -157,3 +169,51 @@ export const pushApi = {
     await api.delete('/api/core/push/subscriptions', { data: { endpoint }, silent: true });
   },
 };
+
+export const authApi = {
+  register: async (payload: RegisterPayload): Promise<User> => {
+    const res = await api.post<User>('/api/auth/register', payload);
+    return res.data;
+  },
+  login: async (payload: LoginPayload): Promise<TokenResponse> => {
+    const res = await api.post<TokenResponse>('/api/auth/login', payload);
+    return res.data;
+  },
+  getMe: async (signal?: AbortSignal, silent = false): Promise<User> => {
+    const res = await api.get<User>('/api/auth/me', { signal, silent });
+    return res.data;
+  },
+  setup2FA: async (): Promise<TOTPSetupResponse> => {
+    const res = await api.post<TOTPSetupResponse>('/api/auth/2fa/setup');
+    return res.data;
+  },
+  verify2FA: async (code: string): Promise<TOTPVerifyResponse> => {
+    const res = await api.post<TOTPVerifyResponse>('/api/auth/2fa/verify', { code });
+    return res.data;
+  },
+};
+
+export const historyApi = {
+  list: async (
+    params?: { page?: number; limit?: number },
+    signal?: AbortSignal
+  ): Promise<ChatHistoryPage> => {
+    const res = await api.get<ChatHistoryPage>('/api/core/chat/history', { params, signal });
+    return res.data;
+  },
+  getEntry: async (id: number, signal?: AbortSignal): Promise<ChatHistoryEntry> => {
+    const res = await api.get<ChatHistoryEntry>(`/api/core/chat/history/${id}`, { signal });
+    return res.data;
+  },
+  deleteEntry: async (id: number): Promise<{ message: string; id: number; deleted: boolean }> => {
+    const res = await api.delete<{ message: string; id: number; deleted: boolean }>(
+      `/api/core/chat/history/${id}`
+    );
+    return res.data;
+  },
+  claim: async (session_key: string): Promise<ChatSessionOut> => {
+    const res = await api.post<ChatSessionOut>('/api/core/chat/history/claim', { session_key });
+    return res.data;
+  },
+};
+
