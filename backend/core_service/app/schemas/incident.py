@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 class IncidentBase(BaseModel):
     title: str = Field(..., min_length=5, max_length=255, description="Título descriptivo de la amenaza detectada.")
@@ -23,8 +23,7 @@ class IncidentResponse(IncidentBase):
     updated_at: datetime
     is_outbreak_spike: bool = False
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class IncidentPagination(BaseModel):
     items: List[IncidentResponse]
@@ -53,5 +52,4 @@ class OfficialChannelResponse(BaseModel):
     verified_whatsapp: Optional[str] = None
     advice: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

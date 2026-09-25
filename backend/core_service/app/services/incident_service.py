@@ -58,7 +58,11 @@ class IncidentService:
         created = self.repo.create(db, data)
         return IncidentResponse.model_validate(created)
 
-    def vote_incident(self, db: Session, incident_id: int, fingerprint: str) -> VoteResponse:
+    def vote_incident(self, db: Session, incident_id: int, fingerprint: str) -> Optional[VoteResponse]:
+        incident = self.repo.get_by_id(db, incident_id)
+        if not incident:
+            return None
+
         success, new_votes = self.repo.register_vote(db, incident_id, fingerprint)
         if not success:
             return VoteResponse(

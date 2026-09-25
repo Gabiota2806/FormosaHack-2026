@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional, List, Any, Dict
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 class ResourceCreate(BaseModel):
     title: str = Field(..., min_length=3, max_length=200)
@@ -29,8 +29,7 @@ class ResourceResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class PaginatedResourceResponse(BaseModel):
     data: List[ResourceResponse]
