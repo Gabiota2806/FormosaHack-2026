@@ -1,5 +1,5 @@
 import { ChevronRight, MessageCircle, PhoneOff, Search, type LucideIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { buildWhatsAppUrl } from '../chat/whatsappShare';
 import { cn } from '../ui/cn';
 import type { LandingProps } from '../landing/types';
@@ -34,8 +34,26 @@ function ActionContent({ icon: Icon, title, hint }: { icon: LucideIcon; title: s
  */
 export function ElderlyHomeView({ onAction }: LandingProps) {
   const [panicOpen, setPanicOpen] = useState(false);
+  const panicButtonRef = useRef<HTMLButtonElement>(null);
+  const returningFromPanic = useRef(false);
 
-  if (panicOpen) return <ElderlyPanicScreen onBack={() => setPanicOpen(false)} />;
+  // Al volver de la pantalla antipánico, el foco regresa al botón que la abrió (si no, queda en <body>).
+  useEffect(() => {
+    if (panicOpen || !returningFromPanic.current) return;
+    returningFromPanic.current = false;
+    panicButtonRef.current?.focus();
+  }, [panicOpen]);
+
+  if (panicOpen) {
+    return (
+      <ElderlyPanicScreen
+        onBack={() => {
+          returningFromPanic.current = true;
+          setPanicOpen(false);
+        }}
+      />
+    );
+  }
 
   return (
     <section aria-labelledby="elderly-home-title" className="mx-auto max-w-2xl space-y-6 animate-fade-up">
@@ -73,6 +91,7 @@ export function ElderlyHomeView({ onAction }: LandingProps) {
         </a>
 
         <button
+          ref={panicButtonRef}
           type="button"
           onClick={() => setPanicOpen(true)}
           className={cn(ACTION_CLASSES, 'border-red-400 bg-red-600 text-white hover:bg-red-700 focus-visible:outline-red-300')}

@@ -249,6 +249,24 @@ describe('App: Modo Abuelo', () => {
     expect(screen.queryByRole('heading', { name: '¿En qué te ayudamos?' })).not.toBeInTheDocument();
   });
 
+  it('la elección sobrevive a una recarga y desactivarlo devuelve la landing completa', async () => {
+    const user = userEvent.setup();
+    const first = render(<App />, { wrapper: ElderlyModeProvider });
+    await user.click(screen.getByRole('switch', { name: 'Modo Abuelo / Simple' }));
+    first.unmount();
+
+    // "Recarga": un montaje nuevo lee la preferencia guardada.
+    render(<App />, { wrapper: ElderlyModeProvider });
+    expect(screen.getByRole('switch', { name: 'Modo Abuelo / Simple' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('heading', { name: '¿En qué te ayudamos?' })).toBeInTheDocument();
+    expect(document.documentElement).toHaveClass('modo-abuelo');
+
+    await user.click(screen.getByRole('switch', { name: 'Modo Abuelo / Simple' }));
+    expect(document.documentElement).not.toHaveClass('modo-abuelo');
+    expect(screen.getByRole('heading', { level: 1, name: /Que no te engañen/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Radar Comunitario' })).toBeInTheDocument();
+  });
+
   it('"Pegar mensaje" abre el asistente para revisar un mensaje', async () => {
     localStorage.setItem('ciberguardian_modo_abuelo', 'true');
     const user = userEvent.setup();

@@ -148,8 +148,10 @@ body {
   --color-slate-400: #e8eef3;
   --color-slate-500: #d3dde5;
 
-  /* Rojos de emergencia más oscuros: el texto blanco encima pasa de 4,8:1 a 8,3:1. */
-  --color-red-500: #b91c1c;
+  /* Rojos de emergencia más oscuros: el texto blanco encima pasa de 4,8:1 a 8,3:1 (red-600) y a
+     7,5:1 en el hover (red-500), que sigue siendo apenas más claro para que se note.
+     Verificado en src/components/elderly/elderlyContrast.test.ts. */
+  --color-red-500: #a51c1c;
   --color-red-600: #991b1b;
 }
 
