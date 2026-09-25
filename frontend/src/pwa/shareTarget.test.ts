@@ -38,6 +38,14 @@ describe('readSharedMessage', () => {
     expect(shared?.text).toHaveLength(SHARED_MESSAGE_MAX_LENGTH);
     expect(shared?.truncated).toBe(true);
   });
+
+  it('extrae el parámetro analyze enviado por la extensión de Chrome', () => {
+    const deepLinkUrl = `?analyze=${encodeURIComponent('https://sitio-sospechoso.com/login')}`;
+    expect(readSharedMessage(deepLinkUrl)).toEqual({
+      text: 'https://sitio-sospechoso.com/login',
+      truncated: false,
+    });
+  });
 });
 
 describe('clearShareParams', () => {
@@ -49,5 +57,15 @@ describe('clearShareParams', () => {
     clearShareParams(location, history);
 
     expect(replaceState).toHaveBeenCalledWith({ a: 1 }, '', '/?ref=pwa#chat');
+  });
+
+  it('limpia también el parámetro analyze preservando el resto de la URL', () => {
+    const replaceState = vi.fn();
+    const location = { href: 'https://ciberguardian.app/?analyze=test1234&tab=chat#view' } as Location;
+    const history = { state: null, replaceState } as unknown as History;
+
+    clearShareParams(location, history);
+
+    expect(replaceState).toHaveBeenCalledWith(null, '', '/?tab=chat#view');
   });
 });
