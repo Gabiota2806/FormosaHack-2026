@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Send, RotateCcw, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { chatApi } from '../../services/api';
 import type { ChatAnalysisResponse } from '../../types';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
+import { cn } from '../ui/cn';
 import { IconBadge } from '../ui/IconBadge';
 import { ChatBubble } from './ChatBubble';
 import { ContentionCard } from './ContentionCard';
@@ -34,6 +35,10 @@ interface ChatAssistantProps {
   initialEntry?: EntryMode;
   /** Se llama al tomar initialEntry, para que el padre lo descarte y no se repita al volver al chat. */
   onInitialEntryHandled?: () => void;
+  /** 'page': tarjeta centrada en la página. 'embedded': ocupa todo su contenedor (panel del widget). */
+  variant?: 'page' | 'embedded';
+  /** Controles extra en el encabezado del chat (p. ej. minimizar el panel del widget). */
+  headerActions?: ReactNode;
 }
 
 // Límites del backend (ChatMessageRequest.message)
@@ -58,6 +63,8 @@ export function ChatAssistant({
   onSharedMessageHandled,
   initialEntry,
   onInitialEntryHandled,
+  variant = 'page',
+  headerActions,
 }: ChatAssistantProps) {
   const shared = sharedMessage?.trim();
   const sharedText = shared && shared.length >= MIN_LENGTH ? shared : undefined;
@@ -276,7 +283,15 @@ export function ChatAssistant({
   };
 
   return (
-    <Card tone="dark" className="max-w-3xl mx-auto rounded-3xl flex flex-col h-[calc(100vh-10rem)] min-h-[480px] animate-fade-up">
+    <Card
+      tone="dark"
+      className={cn(
+        'flex flex-col',
+        variant === 'page'
+          ? 'max-w-3xl mx-auto rounded-3xl h-[calc(100vh-10rem)] min-h-[480px] animate-fade-up'
+          : 'h-full rounded-none border-0 shadow-none bg-slate-800',
+      )}
+    >
       {/* Cabecera del chat */}
       <div className="px-4 sm:px-6 py-3 border-b border-slate-700/70 bg-slate-800/80 flex items-center justify-between gap-3">
         <div>
@@ -286,11 +301,14 @@ export function ChatAssistant({
             Sin registro · No guardamos tus mensajes
           </p>
         </div>
-        {hasStarted && (
-          <Button variant="ghost" size="sm" icon={RotateCcw} onClick={handleReset}>
-            Nueva consulta
-          </Button>
-        )}
+        <div className="flex shrink-0 items-center gap-1">
+          {hasStarted && (
+            <Button variant="ghost" size="sm" icon={RotateCcw} onClick={handleReset}>
+              Nueva consulta
+            </Button>
+          )}
+          {headerActions}
+        </div>
       </div>
 
       {/* Conversación */}
