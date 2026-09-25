@@ -1,8 +1,15 @@
 import { AnalysisStorageItem } from '../types/extension.js';
 import { validateAnalysisInput } from '../utils/validation.js';
+import {
+  CoreApiClient,
+  apiClient,
+  updateBadgeForRisk,
+  saveAnalysisToStorage,
+  DEFAULT_STORAGE_KEY,
+} from '../services/api-client.js';
 
 export const MENU_ITEM_ID = 'ciberguardian-analyze';
-export const STORAGE_KEY_LATEST = 'ciberguardian_latest_analysis';
+export const STORAGE_KEY_LATEST = DEFAULT_STORAGE_KEY;
 
 export function initializeContextMenu(): void {
   if (typeof chrome === 'undefined' || !chrome.contextMenus) return;
@@ -26,9 +33,36 @@ export function extractPayloadFromClick(info: chrome.contextMenus.OnClickData): 
   return '';
 }
 
+export async function executeAnalysisPipeline(
+  item: AnalysisStorageItem,
+  client: CoreApiClient = apiClient
+): Promise<AnalysisStorageItem> {
+  try {
+    const analysis = await client.analyzeMessage(item.text);
+    if (analysis.success && analysis.data) {
+      item.status = 'analyzed';
+      item.result = analysis.data;
+      item.isOffline = analysis.isOfflineFallback ?? false;
+      await updateBadgeForRisk(analysis.data.risk_level);
+    } else {
+      item.status = 'error';
+      item.errorMessage = analysis.error || 'Error al analizar el contenido';
+      await updateBadgeForRisk('error');
+    }
+  } catch (err: unknown) {
+    item.status = 'error';
+    item.errorMessage = err instanceof Error ? err.message : 'Error inesperado';
+    await updateBadgeForRisk('error');
+  }
+
+  await saveAnalysisToStorage(item, STORAGE_KEY_LATEST);
+  return item;
+}
+
 export async function handleContextMenuClick(
   info: chrome.contextMenus.OnClickData,
-  tab?: chrome.tabs.Tab
+  tab?: chrome.tabs.Tab,
+  options?: { autoAnalyze?: boolean; client?: CoreApiClient }
 ): Promise<AnalysisStorageItem> {
   if (info.menuItemId !== MENU_ITEM_ID) {
     throw new Error(`Item de menú desconocido: ${info.menuItemId}`);
@@ -54,14 +88,8 @@ export async function handleContextMenuClick(
       charCount: validation.charCount,
     };
 
-    if (typeof chrome !== 'undefined' && chrome.action) {
-      await chrome.action.setBadgeText({ text: '!' });
-      await chrome.action.setBadgeBackgroundColor({ color: '#EF4444' });
-    }
-
-    if (typeof chrome !== 'undefined' && chrome.storage?.local) {
-      await chrome.storage.local.set({ [STORAGE_KEY_LATEST]: errorItem });
-    }
+    await updateBadgeForRisk('error');
+    await saveAnalysisToStorage(errorItem, STORAGE_KEY_LATEST);
 
     return errorItem;
   }
@@ -76,13 +104,11 @@ export async function handleContextMenuClick(
     charCount: validation.charCount,
   };
 
-  if (typeof chrome !== 'undefined' && chrome.action) {
-    await chrome.action.setBadgeText({ text: '...' });
-    await chrome.action.setBadgeBackgroundColor({ color: '#3B82F6' });
-  }
+  await updateBadgeForRisk('pending');
+  await saveAnalysisToStorage(pendingItem, STORAGE_KEY_LATEST);
 
-  if (typeof chrome !== 'undefined' && chrome.storage?.local) {
-    await chrome.storage.local.set({ [STORAGE_KEY_LATEST]: pendingItem });
+  if (options?.autoAnalyze) {
+    return await executeAnalysisPipeline(pendingItem, options?.client);
   }
 
   return pendingItem;
@@ -97,7 +123,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime?.onInstalled) {
 
 if (typeof chrome !== 'undefined' && chrome.contextMenus?.onClicked) {
   chrome.contextMenus.onClicked.addListener((info, tab) => {
-    handleContextMenuClick(info, tab).catch((err) => {
+    handleContextMenuClick(info, tab, { autoAnalyze: true }).catch((err) => {
       console.error('[CiberGuardián SW] Error procesando clic de menú contextual:', err);
     });
   });
