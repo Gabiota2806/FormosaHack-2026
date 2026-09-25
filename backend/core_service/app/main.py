@@ -2,7 +2,7 @@ import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
-from app.models import incident as incident_models, resource as resource_models
+from app.models import incident as incident_models, resource as resource_models, push as push_models
 from app.routers import resources, chat, incident
 
 Base.metadata.create_all(bind=engine)
