@@ -4,8 +4,6 @@ import { toast } from 'sonner';
 import { chatApi } from '../../services/api';
 import type { ChatAnalysisResponse } from '../../types';
 import { Button } from '../ui/Button';
-import { Card } from '../ui/Card';
-import { cn } from '../ui/cn';
 import { IconBadge } from '../ui/IconBadge';
 import { ChatBubble } from './ChatBubble';
 import { ContentionCard } from './ContentionCard';
@@ -27,20 +25,11 @@ import { buildFamilyShareText, buildWhatsAppUrl } from './whatsappShare';
 interface ChatAssistantProps {
   onReportIncident?: (title: string, entity: string, vector: string, text: string) => void;
   onOpenSos?: () => void;
-  /** Mensaje compartido desde otra app (Web Share Target): se analiza apenas se abre el chat. */
-  sharedMessage?: string;
-  /** Se llama al empezar a analizar sharedMessage, para que el padre lo descarte y no se repita. */
-  onSharedMessageHandled?: () => void;
-  /** Momento con el que arranca el chat (p. ej. desde la landing). Si hay sharedMessage, gana ese. */
-  initialEntry?: EntryMode;
-  /** Se llama al tomar initialEntry, para que el padre lo descarte y no se repita al volver al chat. */
-  onInitialEntryHandled?: () => void;
-  /** 'page': tarjeta centrada en la página. 'embedded': ocupa todo su contenedor (panel del widget). */
-  variant?: 'page' | 'embedded';
   /** Controles extra en el encabezado del chat (p. ej. minimizar el panel del widget). */
   headerActions?: ReactNode;
   /**
-   * Pedido para el chat ya montado (widget): arrancar un momento o analizar un mensaje.
+   * Pedido para el chat, que vive montado dentro del widget: arrancar un momento (landing,
+   * Modo Abuelo) o analizar un mensaje (compartido desde WhatsApp).
    * Se ejecuta una sola vez por id y se confirma con onRequestHandled.
    */
   request?: { id: number; entry?: EntryMode; message?: string } | null;
@@ -67,39 +56,28 @@ const WELCOME_MESSAGE: ChatMessage = {
 export function ChatAssistant({
   onReportIncident,
   onOpenSos,
-  sharedMessage,
-  onSharedMessageHandled,
-  initialEntry,
-  onInitialEntryHandled,
-  variant = 'page',
   headerActions,
   request,
   onRequestHandled,
   onActivityChange,
 }: ChatAssistantProps) {
-  const shared = sharedMessage?.trim();
-  const sharedText = shared && shared.length >= MIN_LENGTH ? shared : undefined;
-  // Se fija al montar: que el padre descarte la prop después no cambia cómo arrancó este chat.
-  const [entryAtMount] = useState(() => (sharedText ? undefined : initialEntry));
-  const firstUserText = sharedText ?? (entryAtMount && ENTRY_OPTIONS.find((o) => o.mode === entryAtMount)!.userText);
-
-  // Con un mensaje compartido o un momento de entrada, el chat arranca mostrándolo y "escribiendo" la respuesta.
-  const [messages, setMessages] = useState<ChatMessage[]>(() =>
-    firstUserText ? [WELCOME_MESSAGE, { id: 1, role: 'user', text: firstUserText }] : [WELCOME_MESSAGE],
-  );
+  const [messages, setMessages] = useState<ChatMessage[]>([WELCOME_MESSAGE]);
   const [inputText, setInputText] = useState('');
-  const [isTyping, setIsTyping] = useState(Boolean(firstUserText));
+  const [isTyping, setIsTyping] = useState(false);
 
-  const nextId = useRef(firstUserText ? 2 : 1);
-  const sharedAnalysisStarted = useRef(false);
-  const entryReplied = useRef(false);
+  const nextId = useRef(1);
   const pendingTimers = useRef<number[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
+  // Las respuestas guionadas no se cancelan al desmontar: StrictMode simula un desmontaje y
+  // las perdería. En cambio, cada respuesta verifica que el chat siga montado.
+  const mounted = useRef(true);
   useEffect(() => {
-    const timers = pendingTimers.current;
-    return () => timers.forEach(clearTimeout);
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -130,19 +108,11 @@ export function ChatAssistant({
     [pushMessages],
   );
 
-  // El ref evita el doble análisis de StrictMode en esta instancia; onSharedMessageHandled,
-  // que se repita cuando el chat se vuelve a montar (por ejemplo, al volver desde el Radar).
-  useEffect(() => {
-    if (!sharedText || sharedAnalysisStarted.current) return;
-    sharedAnalysisStarted.current = true;
-    requestAnalysis(sharedText);
-    onSharedMessageHandled?.();
-  }, [sharedText, requestAnalysis, onSharedMessageHandled]);
-
   const replyAfterDelay = useCallback(
     (replies: NewChatMessage[], onDone?: () => void) => {
       setIsTyping(true);
       const timer = window.setTimeout(() => {
+        if (!mounted.current) return;
         setIsTyping(false);
         pushMessages(...replies);
         onDone?.();
@@ -173,21 +143,6 @@ export function ChatAssistant({
     },
     [onOpenSos],
   );
-
-  // Respuesta al momento de entrada. El temporizador se limpia y se reprograma si el efecto se
-  // repite (StrictMode), y entryReplied evita responder dos veces una vez que ya salió.
-  useEffect(() => {
-    if (!entryAtMount || entryReplied.current) return;
-    onInitialEntryHandled?.();
-    const { replies, onDone } = entryReplies(entryAtMount);
-    const timer = window.setTimeout(() => {
-      entryReplied.current = true;
-      setIsTyping(false);
-      pushMessages(...replies);
-      onDone?.();
-    }, SCRIPTED_REPLY_DELAY_MS);
-    return () => clearTimeout(timer);
-  }, [entryAtMount, entryReplies, onInitialEntryHandled, pushMessages]);
 
   const handleEntry = useCallback(
     (mode: EntryMode) => {
@@ -323,15 +278,7 @@ export function ChatAssistant({
   };
 
   return (
-    <Card
-      tone="dark"
-      className={cn(
-        'flex flex-col',
-        variant === 'page'
-          ? 'max-w-3xl mx-auto rounded-3xl h-[calc(100vh-10rem)] min-h-[480px] animate-fade-up'
-          : 'h-full rounded-none border-0 shadow-none bg-slate-800',
-      )}
-    >
+    <div className="flex h-full flex-col bg-slate-800 text-slate-100">
       {/* Cabecera del chat */}
       <div className="px-4 sm:px-6 py-3 border-b border-slate-700/70 bg-slate-800/80 flex items-center justify-between gap-3">
         <div>
@@ -426,6 +373,6 @@ export function ChatAssistant({
           Esto es una ayuda, no un veredicto. Ante la duda, no actúes.
         </p>
       </div>
-    </Card>
+    </div>
   );
 }

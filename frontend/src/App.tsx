@@ -3,7 +3,6 @@ import { Toaster, toast } from 'sonner';
 import { 
   House,
   ShieldCheck, 
-  MessageSquare, 
   Radio, 
   ShieldAlert, 
   Lock, 
@@ -11,12 +10,10 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { api } from './services/api';
-import { ChatAssistant } from './components/chat/ChatAssistant';
 import { ThreatRadar } from './components/radar/ThreatRadar';
 import { SosModal } from './components/sos/SosModal';
 import { LandingPage } from './components/landing/LandingPage';
 import type { LandingAction } from './components/landing/types';
-import type { EntryMode } from './components/chat/types';
 import { ElderlyModeToggle } from './components/elderly/ElderlyModeToggle';
 import { ElderlyHomeView } from './components/elderly/ElderlyHomeView';
 import { useElderlyMode } from './components/elderly/elderlyMode';
@@ -24,31 +21,40 @@ import { clearShareParams, readSharedMessage } from './pwa/shareTarget';
 import { Button } from './components/ui/Button';
 import { Card } from './components/ui/Card';
 import { IconBadge } from './components/ui/IconBadge';
+import { ChatWidget } from './components/widget/ChatWidget';
+import { ChatWidgetProvider } from './components/widget/ChatWidgetProvider';
+import { useChatWidget } from './components/widget/chatWidgetContext';
+import type { SharedMessage } from './pwa/shareTarget';
 
 const AUTH_INPUT_CLASSES =
   'w-full px-3 py-2 bg-slate-950/70 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/20 transition';
 
-type Tab = 'home' | 'chat' | 'radar' | 'auth';
+// El asistente no es una pestaña: vive en el widget flotante, disponible en todas las secciones.
+type Tab = 'home' | 'radar' | 'auth';
 
-const NAV_ITEMS: { id: Tab; label: string; icon: typeof MessageSquare }[] = [
+const NAV_ITEMS: { id: Tab; label: string; icon: typeof House }[] = [
   { id: 'home', label: 'Inicio', icon: House },
-  { id: 'chat', label: 'Asistente', icon: MessageSquare },
   { id: 'radar', label: 'Radar Comunitario', icon: Radio },
   { id: 'auth', label: '2FA & Auth', icon: Lock },
 ];
 
 export function App() {
-  // Mensaje compartido desde WhatsApp u otra app (Web Share Target, ver manifest.webmanifest).
-  const [sharedMessage, setSharedMessage] = useState(() => readSharedMessage(window.location.search));
-  // La landing es la portada; si llega un mensaje compartido se abre directo el chat para analizarlo.
-  const [activeTab, setActiveTab] = useState<Tab>(() => (sharedMessage ? 'chat' : 'home'));
+  // Mensaje compartido desde WhatsApp u otra app (Web Share Target, ver manifest.webmanifest):
+  // el widget arranca abierto analizándolo.
+  const [sharedMessage] = useState(() => readSharedMessage(window.location.search));
+
+  return (
+    <ChatWidgetProvider initialMessage={sharedMessage?.text}>
+      <AppShell sharedMessage={sharedMessage} />
+    </ChatWidgetProvider>
+  );
+}
+
+function AppShell({ sharedMessage }: { sharedMessage: SharedMessage | null }) {
+  const [activeTab, setActiveTab] = useState<Tab>('home');
   const [sosModalOpen, setSosModalOpen] = useState(false);
-  // Momento con el que se abre el chat desde la landing ("antes" o "durante").
-  const [chatEntry, setChatEntry] = useState<EntryMode | null>(null);
-  // Una vez que el chat los toma se descartan: si no, se repetirían al volver a la pestaña.
-  const handleSharedMessageHandled = useCallback(() => setSharedMessage(null), []);
-  const handleChatEntryHandled = useCallback(() => setChatEntry(null), []);
   const openSos = useCallback(() => setSosModalOpen(true), []);
+  const { openChat, closeChat } = useChatWidget();
 
   const { enabled: elderlyMode } = useElderlyMode();
   // Modo Abuelo: sin la pestaña técnica de 2FA ni el Radar; el inicio pasa a ser la vista de 3 botones.
@@ -64,12 +70,10 @@ export function App() {
   const handleLandingAction = (action: LandingAction) => {
     switch (action) {
       case 'ANALYZE':
-        setChatEntry('PREVENCION');
-        navigate('chat');
+        openChat({ entry: 'PREVENCION' });
         break;
       case 'DURING_CALL':
-        setChatEntry('DURANTE');
-        navigate('chat');
+        openChat({ entry: 'DURANTE' });
         break;
       case 'SOS':
         openSos();
@@ -217,27 +221,14 @@ export function App() {
       </header>
 
       {/* Contenido Principal */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* pb-28: que el botón flotante del asistente no tape el final de la página */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-28">
         {activeTab === 'home' &&
           (elderlyMode ? (
             <ElderlyHomeView onAction={handleLandingAction} />
           ) : (
             <LandingPage onAction={handleLandingAction} />
           ))}
-
-        {activeTab === 'chat' && (
-          <ChatAssistant
-            sharedMessage={sharedMessage?.text}
-            onSharedMessageHandled={handleSharedMessageHandled}
-            initialEntry={chatEntry ?? undefined}
-            onInitialEntryHandled={handleChatEntryHandled}
-            onOpenSos={openSos}
-            onReportIncident={() => {
-              navigate('radar');
-              toast.info('Navegando al Radar para visualizar las amenazas reportadas.');
-            }}
-          />
-        )}
 
         {activeTab === 'radar' && <ThreatRadar />}
 
@@ -364,7 +355,17 @@ export function App() {
         )}
       </main>
 
-      {/* Modal SOS Global */}
+      {/* Asistente flotante (z-40), disponible en todas las secciones */}
+      <ChatWidget
+        onOpenSos={openSos}
+        onReportIncident={() => {
+          closeChat();
+          navigate('radar');
+          toast.info('Navegando al Radar para visualizar las amenazas reportadas.');
+        }}
+      />
+
+      {/* Modal SOS Global (z-50, por encima del widget) */}
       <SosModal
         isOpen={sosModalOpen}
         onClose={() => setSosModalOpen(false)}
